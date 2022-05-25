@@ -11,12 +11,14 @@ use tower::Service;
 
 use crate::{error::ClientError, grpc_response::GrpcResponse, utils::set_panic_hook};
 
+/// `grpc-web` based transport layer for `tonic` clients
 #[derive(Debug, Clone)]
 pub struct Client {
     base_url: String,
 }
 
 impl Client {
+    /// Creates a new client
     pub fn new(base_url: String) -> Self {
         set_panic_hook();
         Self { base_url }

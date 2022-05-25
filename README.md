@@ -5,6 +5,14 @@ using [`tonic`](https://crates.io/crates/tonic) in browsers via webassembly.
 
 ## Usage
 
+To use `tonic-web-wasm-client`, you need to add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+tonic-web-wasm-client = "0.1"
+```
+
+### Example
 To use `tonic` gRPC clients in browser, compile your code with tonic's `transport` feature disabled (this will disable
 the default transport layer of tonic). Then initialize the query client as follows:
 
