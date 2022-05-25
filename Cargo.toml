@@ -2,6 +2,13 @@
 name = "tonic-web-wasm-client"
 version = "0.1.0"
 authors = ["Devashish Dixit <devashishdxt@gmail.com>"]
+license = "MIT/Apache-2.0"
+description = "grpc-web implementation for use by tonic clients in browsers via webassembly"
+homepage = "https://github.com/devashishdxt/tonic-web-wasm-client"
+repository = "https://github.com/devashishdxt/tonic-web-wasm-client"
+readme = "README.md"
+categories = ["web-programming", "network-programming", "asynchronous"]
+keywords = ["grpc", "grpc-web", "tonic", "wasm"]
 edition = "2021"
 
 [features]
