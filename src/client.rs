@@ -1,15 +1,15 @@
 use std::{future::Future, pin::Pin};
 
-use bytes::Bytes;
+use bytes::{Bytes, BytesMut};
 use http::{
     header::{ACCEPT, CONTENT_TYPE},
     Request, Response,
 };
-use http_body::{Body, Full};
+use http_body::{combinators::UnsyncBoxBody, Body};
 use tonic::body::BoxBody;
 use tower::Service;
 
-use crate::{error::ClientError, utils::set_panic_hook};
+use crate::{error::ClientError, grpc_response::GrpcResponse, utils::set_panic_hook};
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -24,7 +24,7 @@ impl Client {
 }
 
 impl Service<Request<BoxBody>> for Client {
-    type Response = Response<Full<Bytes>>;
+    type Response = Response<UnsyncBoxBody<Bytes, ClientError>>;
 
     type Error = ClientError;
 
@@ -45,7 +45,7 @@ impl Service<Request<BoxBody>> for Client {
 async fn request(
     mut url: String,
     req: Request<BoxBody>,
-) -> Result<Response<Full<Bytes>>, ClientError> {
+) -> Result<Response<UnsyncBoxBody<Bytes, ClientError>>, ClientError> {
     url.push_str(&req.uri().to_string());
 
     let client = reqwest::Client::new();
@@ -54,6 +54,7 @@ async fn request(
     builder = builder
         .header(CONTENT_TYPE, "application/grpc-web+proto")
         .header(ACCEPT, "application/grpc-web+proto")
+        .header("x-grpc-web", "1")
         .fetch_credentials_same_origin();
 
     for (header_name, header_value) in req.headers().iter() {
@@ -74,7 +75,14 @@ async fn request(
         result = result.header(header_name.as_str(), header_value.to_str()?);
     }
 
-    let body = Full::new(response.bytes().await?);
+    let content_type = match response.headers().get(CONTENT_TYPE) {
+        None => Err(ClientError::MissingContentTypeHeader),
+        Some(content_type) => content_type.to_str().map_err(Into::into),
+    }?
+    .to_owned();
+
+    let bytes = BytesMut::from(response.bytes().await?.as_ref());
+    let body = UnsyncBoxBody::new(GrpcResponse::new(bytes, &content_type)?);
 
     result.body(body).map_err(Into::into)
 }

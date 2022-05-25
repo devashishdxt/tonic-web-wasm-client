@@ -1,5 +1,6 @@
 mod client;
 mod error;
+mod grpc_response;
 mod utils;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global

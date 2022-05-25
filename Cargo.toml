@@ -4,17 +4,17 @@ version = "0.1.0"
 authors = ["Devashish Dixit <devashishdxt@gmail.com>"]
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [features]
 default = ["console_error_panic_hook"]
 
 [dependencies]
+base64 = "0.13.0"
 bytes = "1.1.0"
 console_error_panic_hook = { version = "0.1.7", optional = true }
+futures-core = "0.3.21"
 http = "0.2.7"
 http-body = "0.4.5"
+httparse = "1.7.1"
 reqwest = { version = "0.11.10", default-features = false }
 thiserror = "1.0.31"
 tonic = { version = "0.7.2", default-features = false }
@@ -23,7 +23,3 @@ wee_alloc = { version = "0.4.5", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.30"
-
-[profile.release]
-# Tell `rustc` to optimize for small code size.
-opt-level = "s"
