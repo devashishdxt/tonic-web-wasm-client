@@ -53,7 +53,8 @@ async fn request(
 
     builder = builder
         .header(CONTENT_TYPE, "application/grpc-web+proto")
-        .header(ACCEPT, "application/grpc-web+proto");
+        .header(ACCEPT, "application/grpc-web+proto")
+        .fetch_credentials_same_origin();
 
     for (header_name, header_value) in req.headers().iter() {
         builder = builder.header(header_name.as_str(), header_value.to_str()?);
