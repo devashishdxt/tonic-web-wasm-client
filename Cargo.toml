@@ -1,0 +1,29 @@
+[package]
+name = "tonic-web-wasm-client"
+version = "0.1.0"
+authors = ["Devashish Dixit <devashishdxt@gmail.com>"]
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+bytes = "1.1.0"
+console_error_panic_hook = { version = "0.1.6", optional = true }
+http = "0.2.7"
+http-body = "0.4.5"
+reqwest = { version = "0.11.10", default-features = false }
+thiserror = "1.0.31"
+tonic = { version = "0.7.2", default-features = false }
+tower = { version = "0.4.12", default-features = false }
+wee_alloc = { version = "0.4.5", optional = true }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.13"
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"
