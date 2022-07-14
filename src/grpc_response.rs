@@ -22,6 +22,13 @@ impl GrpcResponse {
             body = BytesMut::from(base64::decode(body)?.as_slice());
         }
 
+        if body.len() < 5 {
+            return Ok(Self {
+                data: Bytes::new(),
+                trailers: Default::default(),
+            });
+        }
+
         body.extend(b"\n");
 
         let compression_flag = body.get_u8();
@@ -46,7 +53,7 @@ impl GrpcResponse {
             trailers.insert(header_name, header_value);
         }
 
-        let mut data = BytesMut::with_capacity(data_bytes.len() + 1);
+        let mut data = BytesMut::with_capacity(data_bytes.len() + 5);
         data.put_u8(compression_flag);
         data.put_u32(len);
         data.extend_from_slice(&data_bytes);
