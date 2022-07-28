@@ -60,7 +60,9 @@ async fn request(
         .fetch_credentials_same_origin();
 
     for (header_name, header_value) in req.headers().iter() {
-        builder = builder.header(header_name.as_str(), header_value.to_str()?);
+        if header_name != CONTENT_TYPE && header_name != ACCEPT {
+            builder = builder.header(header_name.as_str(), header_value.to_str()?);
+        }
     }
 
     let body = req.into_body().data().await;
