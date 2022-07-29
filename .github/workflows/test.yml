@@ -24,7 +24,7 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v1
       - name: Build test `tonic-web` server
-        run: just build-test-server &
+        run: just build-test-server
       - name: Run test `tonic-web` server
         run: just start-test-server &
       - name: Run headless browser test
