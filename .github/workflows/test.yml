@@ -24,7 +24,7 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v1
       - name: Run test `tonic-web` server
-        run: just start-test-server
+        run: just start-test-server &
       - name: Wait for test `tonic-web` server to start
         uses: ifaxity/wait-on-action@v1
         with:
