@@ -1,0 +1,15 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prost = "0.10.4"
+tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread"] }
+tonic = "0.7.2"
+tonic-web = "0.3.0"
+
+[build-dependencies]
+tonic-build = "0.7.2"
