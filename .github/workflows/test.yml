@@ -23,6 +23,8 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Install just
         uses: extractions/setup-just@v1
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
       - name: Build test `tonic-web` server
         run: just build-test-server
       - name: Run test `tonic-web` server
