@@ -25,6 +25,22 @@ let query_client = QueryClient::new(Client::new(base_url)); // `QueryClient` is 
 let response = query_client.status().await; // Execute your queries the same way as you do with defaule transport layer
 ```
 
+### Building
+
+Since `tonic-web-wasm-client` is primarily intended for use in browsers, a crate that uses `tonic-web-wasm-client`
+can only be built for `wasm32` target architectures:
+
+```shell
+cargo build --target wasm32-unknown-unknown
+```
+
+Other option is to create a `.cargo/config.toml` in your crate repository and add a build target there:
+
+```toml
+[build]
+target = "wasm32-unknown-unknown"
+```
+
 ## License
 
 Licensed under either of
