@@ -4,6 +4,8 @@ package echo;
 
 service Echo {
   rpc Echo (EchoRequest) returns (EchoResponse) {}
+
+  rpc EchoStream (EchoRequest) returns (stream EchoResponse) {}
 }
 
 message EchoRequest {
