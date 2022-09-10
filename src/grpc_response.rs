@@ -11,6 +11,9 @@ use httparse::{Status, EMPTY_HEADER};
 
 use crate::ClientError;
 
+/// If 8th MSB of a frame is `0` for data and `1` for trailer
+const TRAILER_BIT: u8 = 0b10000000;
+
 pub struct GrpcResponse {
     data: Bytes,
     trailers: HeaderMap<HeaderValue>,
@@ -31,11 +34,22 @@ impl GrpcResponse {
 
         body.extend(b"\n");
 
-        let compression_flag = body.get_u8();
-        let len = body.get_u32();
+        let mut data = BytesMut::new();
 
-        let data_bytes = body.split_to(len as usize).freeze();
-        body.advance(5);
+        let mut compression_flag = body.get_u8();
+
+        while compression_flag & TRAILER_BIT == 0 {
+            let len = body.get_u32();
+            let data_bytes = body.split_to(len as usize).freeze();
+
+            data.put_u8(compression_flag);
+            data.put_u32(len);
+            data.extend_from_slice(&data_bytes);
+
+            compression_flag = body.get_u8();
+        }
+
+        body.advance(4);
 
         let mut trailers_buf = [EMPTY_HEADER; 64];
         let parsed_trailers = match httparse::parse_headers(&body, &mut trailers_buf)
@@ -52,11 +66,6 @@ impl GrpcResponse {
             let header_value = HeaderValue::from_bytes(parsed_trailer.value)?;
             trailers.insert(header_name, header_value);
         }
-
-        let mut data = BytesMut::with_capacity(data_bytes.len() + 5);
-        data.put_u8(compression_flag);
-        data.put_u32(len);
-        data.extend_from_slice(&data_bytes);
 
         Ok(Self {
             data: data.freeze(),
