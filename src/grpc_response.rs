@@ -4,7 +4,7 @@ use std::{
     task::{Context, Poll},
 };
 
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{Buf, Bytes, BytesMut};
 use http::{header::HeaderName, HeaderMap, HeaderValue};
 use http_body::Body;
 use httparse::{Status, EMPTY_HEADER};
@@ -34,25 +34,12 @@ impl GrpcResponse {
 
         body.extend(b"\n");
 
-        let mut data = BytesMut::new();
+        let body = body.freeze();
 
-        let mut compression_flag = body.get_u8();
-
-        while compression_flag & TRAILER_BIT == 0 {
-            let len = body.get_u32();
-            let data_bytes = body.split_to(len as usize).freeze();
-
-            data.put_u8(compression_flag);
-            data.put_u32(len);
-            data.extend_from_slice(&data_bytes);
-
-            compression_flag = body.get_u8();
-        }
-
-        body.advance(4);
+        let (data, trailer) = split_data_and_trailer(body);
 
         let mut trailers_buf = [EMPTY_HEADER; 64];
-        let parsed_trailers = match httparse::parse_headers(&body, &mut trailers_buf)
+        let parsed_trailers = match httparse::parse_headers(&trailer, &mut trailers_buf)
             .map_err(|_| ClientError::HeaderParsingError)?
         {
             Status::Complete((_, headers)) => Ok(headers),
@@ -67,10 +54,7 @@ impl GrpcResponse {
             trailers.insert(header_name, header_value);
         }
 
-        Ok(Self {
-            data: data.freeze(),
-            trailers,
-        })
+        Ok(Self { data, trailers })
     }
 }
 
@@ -100,4 +84,26 @@ impl Body for GrpcResponse {
             Poll::Ready(Ok(Some(take(&mut self.trailers))))
         }
     }
+}
+
+fn split_data_and_trailer(mut body: Bytes) -> (Bytes, Bytes) {
+    let mut body_cursor = body.clone();
+
+    let mut data_index = 0;
+
+    let mut compression_flag = body_cursor.get_u8();
+
+    while compression_flag & TRAILER_BIT == 0 {
+        let len = body_cursor.get_u32();
+        data_index += 5 + (len as usize);
+
+        body_cursor.advance(len as usize);
+
+        compression_flag = body_cursor.get_u8();
+    }
+
+    let data = body.split_to(data_index);
+    body.advance(5);
+
+    (data, body)
 }
