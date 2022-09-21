@@ -6,7 +6,7 @@ use std::{
 
 use futures_core::Stream;
 use proto::echo_server::EchoServer;
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{transport::{Server, Identity, ServerTlsConfig}, Request, Response, Status};
 
 use self::proto::{echo_server::Echo, EchoRequest, EchoResponse};
 
@@ -64,10 +64,15 @@ impl Stream for MessageStream {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let key = tokio::fs::read("certs/key.pem").await?;
+    let cert = tokio::fs::read("certs/cert.pem").await?;
+    let identity = Identity::from_pem(cert, key);
+
     let addr = "[::1]:50051".parse().unwrap();
     let echo = EchoServer::new(EchoService);
 
     Server::builder()
+        .tls_config(ServerTlsConfig::new().identity(identity))?
         .accept_http1(true)
         .add_service(tonic_web::enable(echo))
         .serve(addr)
