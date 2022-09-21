@@ -8,7 +8,7 @@ pub mod proto {
 
 impl Default for EchoClient<Client> {
     fn default() -> Self {
-        let base_url = "http://localhost:50051".to_string();
+        let base_url = "https://localhost:50051".to_string();
         let wasm_client = Client::new(base_url);
 
         EchoClient::new(wasm_client)
