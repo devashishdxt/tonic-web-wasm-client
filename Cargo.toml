@@ -9,17 +9,17 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 base64 = "0.13.0"
-bytes = "1.1.0"
+bytes = "1.2.1"
 console_error_panic_hook = { version = "0.1.7", optional = true }
-futures-core = "0.3.21"
-http = "0.2.7"
+futures-core = "0.3.24"
+http = "0.2.8"
 http-body = "0.4.5"
-httparse = "1.7.1"
-reqwest = { version = "0.11.10", default-features = false }
-thiserror = "1.0.31"
-tonic = { version = "0.7.2", default-features = false }
-tower = { version = "0.4.12", default-features = false }
+httparse = "1.8.0"
+reqwest = { version = "0.11.12", default-features = false }
+thiserror = "1.0.37"
+tonic = { version = "0.8.2", default-features = false }
+tower = { version = "0.4.13", default-features = false }
 wee_alloc = { version = "0.4.5", optional = true }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.30"
+wasm-bindgen-test = "0.3.33"
