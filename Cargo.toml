@@ -11,22 +11,26 @@ categories = ["web-programming", "network-programming", "asynchronous"]
 keywords = ["grpc", "grpc-web", "tonic", "wasm"]
 edition = "2021"
 
-[features]
-default = ["console_error_panic_hook"]
-
 [dependencies]
-base64 = "0.13.0"
-bytes = "1.2.1"
-console_error_panic_hook = { version = "0.1.7", optional = true }
-futures-core = "0.3.24"
+base64 = "0.13.1"
+bytes = "1.3.0"
+futures-util = "0.3.25"
 http = "0.2.8"
 http-body = "0.4.5"
 httparse = "1.8.0"
-reqwest = { version = "0.11.12", default-features = false }
+js-sys = "0.3.60"
+pin-project = "1.0.12"
 thiserror = "1.0.37"
 tonic = { version = "0.8.2", default-features = false }
-tower = { version = "0.4.13", default-features = false }
-wee_alloc = { version = "0.4.5", optional = true }
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3.33"
+wasm-bindgen = "0.2.83"
+wasm-bindgen-futures = "0.4.33"
+wasm-streams = "0.3.0"
+web-sys = { version = "0.3.60", features = [
+    "Headers",
+    "Request",
+    "Response",
+    "ServiceWorkerGlobalScope",
+    "RequestInit",
+    "RequestCredentials",
+    "ReadableStream",
+] }

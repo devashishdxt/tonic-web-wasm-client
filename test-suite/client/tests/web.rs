@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use client::proto::{echo_client::EchoClient, EchoRequest};
 use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 
@@ -37,7 +39,4 @@ async fn test_echo_stream() {
 
         assert_eq!(response.message, "echo(John)");
     }
-
-    let response = stream_response.message().await.expect("stream message");
-    assert!(response.is_none());
 }

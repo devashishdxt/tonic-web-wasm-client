@@ -51,14 +51,10 @@ impl Stream for MessageStream {
     type Item = Result<EchoResponse, Status>;
 
     fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        if self.count < 3 {
-            self.count += 1;
-            Poll::Ready(Some(Ok(EchoResponse {
-                message: format!("echo({})", self.message),
-            })))
-        } else {
-            Poll::Ready(None)
-        }
+        // Create a stream that never ends
+        Poll::Ready(Some(Ok(EchoResponse {
+            message: format!("echo({})", self.message),
+        })))
     }
 }
 
