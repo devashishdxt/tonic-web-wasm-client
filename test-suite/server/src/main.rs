@@ -20,6 +20,8 @@ pub struct EchoService;
 impl Echo for EchoService {
     type EchoStreamStream = MessageStream;
 
+    type EchoInfiniteStreamStream = InfiniteMessageStream;
+
     async fn echo(&self, request: Request<EchoRequest>) -> Result<Response<EchoResponse>, Status> {
         let request = request.into_inner();
         Ok(Response::new(EchoResponse {
@@ -33,6 +35,14 @@ impl Echo for EchoService {
     ) -> Result<Response<Self::EchoStreamStream>, Status> {
         let request = request.into_inner();
         Ok(Response::new(MessageStream::new(request.message)))
+    }
+
+    async fn echo_infinite_stream(
+        &self,
+        request: tonic::Request<EchoRequest>,
+    ) -> Result<tonic::Response<Self::EchoInfiniteStreamStream>, tonic::Status> {
+        let request = request.into_inner();
+        Ok(Response::new(InfiniteMessageStream::new(request.message)))
     }
 }
 
@@ -51,9 +61,36 @@ impl Stream for MessageStream {
     type Item = Result<EchoResponse, Status>;
 
     fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        // Create a stream that never ends
+        if self.count < 3 {
+            self.count += 1;
+            Poll::Ready(Some(Ok(EchoResponse {
+                message: format!("echo({})", self.message),
+            })))
+        } else {
+            Poll::Ready(None)
+        }
+    }
+}
+
+pub struct InfiniteMessageStream {
+    message: String,
+    count: u8,
+}
+
+impl InfiniteMessageStream {
+    pub fn new(message: String) -> Self {
+        Self { message, count: 0 }
+    }
+}
+
+impl Stream for InfiniteMessageStream {
+    type Item = Result<EchoResponse, Status>;
+
+    fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        self.count = self.count.saturating_add(1);
+
         Poll::Ready(Some(Ok(EchoResponse {
-            message: format!("echo({})", self.message),
+            message: format!("echo({}, {})", self.message, self.count),
         })))
     }
 }
