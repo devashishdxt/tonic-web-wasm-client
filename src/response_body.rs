@@ -4,7 +4,8 @@ use std::{
     task::{Context, Poll},
 };
 
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use byteorder::{BigEndian, ByteOrder};
+use bytes::{BufMut, Bytes, BytesMut};
 use futures_util::ready;
 use http::{header::HeaderName, HeaderMap, HeaderValue};
 use http_body::Body;
@@ -166,10 +167,10 @@ impl ResponseBody {
                         // Can't read compression flag right now
                         return Ok(());
                     } else {
-                        let compression_flag = this.buf.get_u8();
+                        let compression_flag = this.buf.take(1);
 
-                        if compression_flag & TRAILER_BIT == 0 {
-                            this.incomplete_data.put_u8(compression_flag);
+                        if compression_flag[0] & TRAILER_BIT == 0 {
+                            this.incomplete_data.unsplit(compression_flag);
                             *this.state = ReadState::DataLength;
                         } else {
                             *this.state = ReadState::TrailerLength;
@@ -181,8 +182,10 @@ impl ResponseBody {
                         // Can't read data length right now
                         return Ok(());
                     } else {
-                        let data_length = this.buf.get_u32();
-                        this.incomplete_data.put_u32(data_length);
+                        let data_length_bytes = this.buf.take(4);
+                        let data_length = BigEndian::read_u32(data_length_bytes.as_ref());
+
+                        this.incomplete_data.unsplit(data_length_bytes);
                         *this.state = ReadState::Data(data_length);
                     }
                 }
@@ -193,12 +196,12 @@ impl ResponseBody {
                         // Can't read data right now
                         return Ok(());
                     } else {
-                        this.incomplete_data.put(this.buf.take(data_length));
+                        this.incomplete_data.unsplit(this.buf.take(data_length));
 
                         let new_data = this.incomplete_data.split();
 
                         if let Some(data) = this.data {
-                            data.put(new_data);
+                            data.unsplit(new_data);
                         } else {
                             *this.data = Some(new_data);
                         }
@@ -211,7 +214,8 @@ impl ResponseBody {
                         // Can't read data length right now
                         return Ok(());
                     } else {
-                        let trailer_length = this.buf.get_u32();
+                        let trailer_length_bytes = this.buf.take(4);
+                        let trailer_length = BigEndian::read_u32(trailer_length_bytes.as_ref());
                         *this.state = ReadState::Trailer(trailer_length);
                     }
                 }
