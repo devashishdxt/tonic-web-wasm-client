@@ -41,3 +41,27 @@ async fn test_echo_stream() {
     let response = stream_response.message().await.expect("stream message");
     assert!(response.is_none());
 }
+
+#[wasm_bindgen_test]
+async fn test_infinite_echo_stream() {
+    let mut client = EchoClient::default();
+
+    let mut stream_response = client
+        .echo_infinite_stream(EchoRequest {
+            message: "John".to_string(),
+        })
+        .await
+        .expect("success stream response")
+        .into_inner();
+
+    for i in 0..3 {
+        let response = stream_response.message().await.expect("stream message");
+        assert!(response.is_some(), "{}", i);
+        let response = response.unwrap();
+
+        assert_eq!(response.message, format!("echo(John, {})", i + 1));
+    }
+
+    let response = stream_response.message().await.expect("stream message");
+    assert!(response.is_some());
+}
