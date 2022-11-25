@@ -106,6 +106,7 @@ impl ReadState {
     }
 }
 
+/// Type to handle HTTP response
 #[pin_project]
 pub struct ResponseBody {
     #[pin]
@@ -119,7 +120,7 @@ pub struct ResponseBody {
 }
 
 impl ResponseBody {
-    pub fn new(body_stream: ReadableStream, content_type: &str) -> Result<Self, Error> {
+    pub(crate) fn new(body_stream: ReadableStream, content_type: &str) -> Result<Self, Error> {
         let body_stream =
             wasm_streams::ReadableStream::from_raw(body_stream.unchecked_into()).into_stream();
 

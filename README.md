@@ -9,7 +9,7 @@ To use `tonic-web-wasm-client`, you need to add the following to your `Cargo.tom
 
 ```toml
 [dependencies]
-tonic-web-wasm-client = "0.2"
+tonic-web-wasm-client = "0.3"
 ```
 
 ### Example

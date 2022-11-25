@@ -3,6 +3,7 @@ use js_sys::Object;
 use thiserror::Error;
 use wasm_bindgen::{JsCast, JsValue};
 
+/// Error type for `tonic-web-wasm-client`
 #[derive(Debug, Error)]
 pub enum Error {
     /// Base64 decode error
