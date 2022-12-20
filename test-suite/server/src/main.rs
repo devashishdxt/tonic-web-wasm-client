@@ -2,11 +2,15 @@ use std::{
     error::Error,
     pin::Pin,
     task::{Context, Poll},
+    time::Duration,
 };
 
 use futures_core::Stream;
+use http::header::HeaderName;
 use proto::echo_server::EchoServer;
 use tonic::{transport::Server, Request, Response, Status};
+use tonic_web::GrpcWebLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use self::proto::{echo_server::Echo, EchoRequest, EchoResponse};
 
@@ -95,6 +99,12 @@ impl Stream for InfiniteMessageStream {
     }
 }
 
+const DEFAULT_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
+const DEFAULT_EXPOSED_HEADERS: [&str; 3] =
+    ["grpc-status", "grpc-message", "grpc-status-details-bin"];
+const DEFAULT_ALLOW_HEADERS: [&str; 4] =
+    ["x-grpc-web", "content-type", "x-user-agent", "grpc-timeout"];
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let addr = "[::1]:50051".parse().unwrap();
@@ -102,7 +112,28 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     Server::builder()
         .accept_http1(true)
-        .add_service(tonic_web::enable(echo))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(AllowOrigin::mirror_request())
+                .allow_credentials(true)
+                .max_age(DEFAULT_MAX_AGE)
+                .expose_headers(
+                    DEFAULT_EXPOSED_HEADERS
+                        .iter()
+                        .cloned()
+                        .map(HeaderName::from_static)
+                        .collect::<Vec<HeaderName>>(),
+                )
+                .allow_headers(
+                    DEFAULT_ALLOW_HEADERS
+                        .iter()
+                        .cloned()
+                        .map(HeaderName::from_static)
+                        .collect::<Vec<HeaderName>>(),
+                ),
+        )
+        .layer(GrpcWebLayer::new())
+        .add_service(echo)
         .serve(addr)
         .await?;
 
