@@ -44,7 +44,6 @@ mod client;
 mod content_type;
 mod error;
 mod fetch;
-mod interceptor;
 mod response_body;
 
 pub use self::{client::Client, error::Error, response_body::ResponseBody};
