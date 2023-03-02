@@ -4,7 +4,7 @@ use std::{
 };
 
 use bytes::Bytes;
-use futures_util::{Stream, TryStreamExt};
+use futures_util::{stream::empty, Stream, TryStreamExt};
 use http_body::Body;
 use js_sys::Uint8Array;
 use wasm_streams::readable::IntoStream;
@@ -27,6 +27,14 @@ impl BodyStream {
                 bytes_vec.into()
             })
             .map_err(Error::js_error);
+
+        Self {
+            body_stream: Box::pin(body_stream),
+        }
+    }
+
+    pub fn empty() -> Self {
+        let body_stream = empty();
 
         Self {
             body_stream: Box::pin(body_stream),

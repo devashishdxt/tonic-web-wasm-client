@@ -4,6 +4,7 @@ use std::{
     task::{Context, Poll},
 };
 
+use base64::{prelude::BASE64_STANDARD, Engine};
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, Bytes, BytesMut};
 use futures_util::ready;
@@ -45,7 +46,9 @@ impl EncodedBytes {
         let index = self.max_decodable();
 
         if self.raw_buf.len() >= index {
-            let decoded = base64::decode(self.buf.split_to(index)).map(Bytes::from)?;
+            let decoded = BASE64_STANDARD
+                .decode(self.buf.split_to(index))
+                .map(Bytes::from)?;
             self.buf.put(decoded);
         }
 
@@ -331,6 +334,24 @@ impl Body for ResponseBody {
                 // If stream is finished but state machine is not done, return error
                 return Poll::Ready(Err(Error::MalformedResponse));
             }
+        }
+    }
+}
+
+impl Default for ResponseBody {
+    fn default() -> Self {
+        Self {
+            body_stream: BodyStream::empty(),
+            buf: EncodedBytes {
+                encoding: Encoding::None,
+                raw_buf: BytesMut::new(),
+                buf: BytesMut::new(),
+            },
+            incomplete_data: BytesMut::new(),
+            data: None,
+            trailer: None,
+            state: ReadState::Done,
+            finished_stream: true,
         }
     }
 }
