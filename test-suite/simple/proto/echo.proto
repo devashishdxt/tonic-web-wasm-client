@@ -8,6 +8,8 @@ service Echo {
   rpc EchoStream (EchoRequest) returns (stream EchoResponse) {}
 
   rpc EchoInfiniteStream (EchoRequest) returns (stream EchoResponse) {}
+
+  rpc EchoErrorResponse (EchoRequest) returns (EchoResponse) {}
 }
 
 message EchoRequest {
