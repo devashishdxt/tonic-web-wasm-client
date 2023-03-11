@@ -48,6 +48,13 @@ impl Echo for EchoService {
         let request = request.into_inner();
         Ok(Response::new(InfiniteMessageStream::new(request.message)))
     }
+
+    async fn echo_error_response(
+        &self,
+        _: tonic::Request<EchoRequest>,
+    ) -> Result<Response<EchoResponse>, tonic::Status> {
+        Err(tonic::Status::unauthenticated("user not authenticated"))
+    }
 }
 
 pub struct MessageStream {

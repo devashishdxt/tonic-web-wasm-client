@@ -1,4 +1,5 @@
 use client::proto::{echo_client::EchoClient, EchoRequest};
+use tonic::Code;
 use tonic_web_wasm_client::Client;
 use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 
@@ -72,4 +73,18 @@ async fn test_infinite_echo_stream() {
 
     let response = stream_response.message().await.expect("stream message");
     assert!(response.is_some());
+}
+
+#[wasm_bindgen_test]
+async fn test_error_response() {
+    let mut client = build_client();
+
+    let error = client
+        .echo_error_response(EchoRequest {
+            message: "John".to_string(),
+        })
+        .await
+        .unwrap_err();
+
+    assert_eq!(error.code(), Code::Unauthenticated);
 }
