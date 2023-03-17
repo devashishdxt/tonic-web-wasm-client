@@ -47,3 +47,4 @@ mod fetch;
 mod response_body;
 
 pub use self::{client::Client, error::Error, response_body::ResponseBody};
+pub use self::call::FetchOptions;
