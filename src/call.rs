@@ -18,7 +18,7 @@ pub struct FetchOptions {
     pub credentials: RequestCredentials,
 
     /// These headers are applied to the request after set_response_headers() is called, allowing overrides.
-    pub header_override: Option<Headers>,
+    pub header_override: Option<HeaderMap<HeaderValue>>,
 
     /// The HTTP method to use for the request. The default is POST.
     pub method: String,
@@ -63,13 +63,29 @@ impl Default for FetchOptions {
 pub async fn call(
     mut base_url: String,
     request: Request<BoxBody>,
+    options: Option<FetchOptions>,
 ) -> Result<Response<ResponseBody>, Error> {
     base_url.push_str(&request.uri().to_string());
 
+    let options = options.unwrap_or_default();
+
     let headers = prepare_headers(request.headers())?;
+
+    if let Some(header_override) = &options.header_override {
+        for (header_name, header_value) in header_override.iter() {
+            let exists = headers.has(header_name.as_str()).map_err(Error::js_error)?;
+
+            if exists {
+                headers.set(header_name.as_str(), header_value.to_str()?).map_err(Error::js_error)?;
+            } else {
+                headers.append(header_name.as_str(), header_value.to_str()?).map_err(Error::js_error)?;
+            }
+        }
+    }
+
     let body = prepare_body(request).await?;
 
-    let request = prepare_request(&base_url, headers, body)?;
+    let request = prepare_request(&base_url, headers, body, options)?;
     let response = fetch(&request).await?;
 
     let result = Response::builder().status(response.status());
@@ -114,13 +130,32 @@ fn prepare_request(
     url: &str,
     headers: Headers,
     body: Option<JsValue>,
+    options: FetchOptions,
 ) -> Result<web_sys::Request, Error> {
     let mut init = RequestInit::new();
 
-    init.method("POST")
+    init.method(options.method.as_str())
         .headers(headers.as_ref())
         .body(body.as_ref())
-        .credentials(RequestCredentials::Include);
+        .cache(options.cache)
+        .redirect(options.redirect)
+        .credentials(options.credentials);
+
+    if let Some(referrer) = options.referrer {
+        init.referrer(referrer.as_str());
+    }
+
+    if let Some(referrer_policy) = options.referrer_policy {
+        init.referrer_policy(referrer_policy);
+    }
+
+    if let Some(integrity) = options.integrity {
+        init.integrity(integrity.as_str());
+    }
+
+    if let Some(abort_signal) = options.abort_signal {
+        init.signal(Some(&abort_signal));
+    }
 
     web_sys::Request::new_with_str_and_init(url, &init).map_err(Error::js_error)
 }
