@@ -12,6 +12,7 @@ use web_sys::{AbortSignal, Headers, ReferrerPolicy, RequestCredentials, RequestC
 use crate::{fetch::fetch, Error, ResponseBody};
 
 /// Override the default options for the fetch Web API call. See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters) for details.
+#[derive(Debug, Clone)]
 pub struct FetchOptions {
     /// Controls what browsers do with credentials (cookies, HTTP authentication entries, and TLS client certificates)
     /// omit, same-origin, or include. The default is same-origin when FetchOptions is not specified.
@@ -63,11 +64,9 @@ impl Default for FetchOptions {
 pub async fn call(
     mut base_url: String,
     request: Request<BoxBody>,
-    options: Option<FetchOptions>,
+    options: FetchOptions,
 ) -> Result<Response<ResponseBody>, Error> {
     base_url.push_str(&request.uri().to_string());
-
-    let options = options.unwrap_or_default();
 
     let headers = prepare_headers(request.headers())?;
 
