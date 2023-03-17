@@ -7,9 +7,58 @@ use http_body::Body;
 use js_sys::{Array, Uint8Array};
 use tonic::body::BoxBody;
 use wasm_bindgen::JsValue;
-use web_sys::{Headers, RequestCredentials, RequestInit};
+use web_sys::{AbortSignal, Headers, ReferrerPolicy, RequestCredentials, RequestCache, RequestRedirect, RequestInit};
 
 use crate::{fetch::fetch, Error, ResponseBody};
+
+/// Override the default options for the fetch Web API call. See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters) for details.
+pub struct FetchOptions {
+    /// Controls what browsers do with credentials (cookies, HTTP authentication entries, and TLS client certificates)
+    /// omit, same-origin, or include. The default is same-origin when FetchOptions is not specified.
+    pub credentials: RequestCredentials,
+
+    /// These headers are applied to the request after set_response_headers() is called, allowing overrides.
+    pub header_override: Option<Headers>,
+
+    /// The HTTP method to use for the request. The default is POST.
+    pub method: String,
+
+    /// Indicates how the request will use the browser's HTTP cache. The default is "default". 
+    pub cache: RequestCache,
+
+    /// Sets how redirects are handled. The default is "follow".
+    pub redirect: RequestRedirect,
+
+    /// The referrer of the request. If None, does not override the default referrer.
+    pub referrer: Option<String>,
+
+    /// The referrer policy of the request. If None, does not override the default referrer policy.
+    pub referrer_policy: Option<ReferrerPolicy>,
+    
+    /// The integrity value of the request (i.e.: a hash of the body). If None, is not set.
+    pub integrity: Option<String>,
+
+    /// The AbortSignal associated with the request. If None, is not set.
+    /// This can be used to abort a long-running request.
+    pub abort_signal: Option<AbortSignal>,
+}
+
+impl Default for FetchOptions {
+    fn default() -> Self {
+        Self {
+            credentials: RequestCredentials::SameOrigin,
+            header_override: None,
+            method: "POST".to_string(),
+            cache: RequestCache::Default,
+            redirect: RequestRedirect::Follow,
+            referrer: None,
+            referrer_policy: None,
+            integrity: None,
+            abort_signal: None,
+        }
+    }
+}
+
 
 pub async fn call(
     mut base_url: String,
@@ -71,7 +120,7 @@ fn prepare_request(
     init.method("POST")
         .headers(headers.as_ref())
         .body(body.as_ref())
-        .credentials(RequestCredentials::SameOrigin);
+        .credentials(RequestCredentials::Include);
 
     web_sys::Request::new_with_str_and_init(url, &init).map_err(Error::js_error)
 }

@@ -28,11 +28,15 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.34"
 wasm-streams = "0.3.0"
 web-sys = { version = "0.3.61", features = [
+    "AbortSignal",
     "Headers",
+    "ReadableStream",
+    "ReferrerPolicy",
     "Request",
+    "RequestCache",
+    "RequestCredentials",
+    "RequestInit",
+    "RequestRedirect",
     "Response",
     "ServiceWorkerGlobalScope",
-    "RequestInit",
-    "RequestCredentials",
-    "ReadableStream",
 ] }
