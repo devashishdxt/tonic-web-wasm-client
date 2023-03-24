@@ -8,7 +8,10 @@ use http::{Request, Response};
 use tonic::body::BoxBody;
 use tower_service::Service;
 
-use crate::{call::{call, FetchOptions}, Error, ResponseBody};
+use crate::{
+    call::{call, FetchOptions},
+    Error, ResponseBody,
+};
 
 /// `grpc-web` based transport layer for `tonic` clients
 #[derive(Debug, Clone)]
@@ -20,7 +23,10 @@ pub struct Client {
 impl Client {
     /// Creates a new client
     pub fn new(base_url: String) -> Self {
-        Self { base_url, options: FetchOptions::default() }
+        Self {
+            base_url,
+            options: FetchOptions::default(),
+        }
     }
 
     /// Creates a new client with custom options

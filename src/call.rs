@@ -7,7 +7,10 @@ use http_body::Body;
 use js_sys::{Array, Uint8Array};
 use tonic::body::BoxBody;
 use wasm_bindgen::JsValue;
-use web_sys::{AbortSignal, Headers, ReferrerPolicy, RequestCredentials, RequestCache, RequestRedirect, RequestInit};
+use web_sys::{
+    AbortSignal, Headers, ReferrerPolicy, RequestCache, RequestCredentials, RequestInit,
+    RequestRedirect,
+};
 
 use crate::{fetch::fetch, Error, ResponseBody};
 
@@ -24,7 +27,7 @@ pub struct FetchOptions {
     /// The HTTP method to use for the request. The default is POST.
     pub method: String,
 
-    /// Indicates how the request will use the browser's HTTP cache. The default is "default". 
+    /// Indicates how the request will use the browser's HTTP cache. The default is "default".
     pub cache: RequestCache,
 
     /// Sets how redirects are handled. The default is "follow".
@@ -35,7 +38,7 @@ pub struct FetchOptions {
 
     /// The referrer policy of the request. If None, does not override the default referrer policy.
     pub referrer_policy: Option<ReferrerPolicy>,
-    
+
     /// The integrity value of the request (i.e.: a hash of the body). If None, is not set.
     pub integrity: Option<String>,
 
@@ -60,7 +63,6 @@ impl Default for FetchOptions {
     }
 }
 
-
 pub async fn call(
     mut base_url: String,
     request: Request<BoxBody>,
@@ -75,9 +77,13 @@ pub async fn call(
             let exists = headers.has(header_name.as_str()).map_err(Error::js_error)?;
 
             if exists {
-                headers.set(header_name.as_str(), header_value.to_str()?).map_err(Error::js_error)?;
+                headers
+                    .set(header_name.as_str(), header_value.to_str()?)
+                    .map_err(Error::js_error)?;
             } else {
-                headers.append(header_name.as_str(), header_value.to_str()?).map_err(Error::js_error)?;
+                headers
+                    .append(header_name.as_str(), header_value.to_str()?)
+                    .map_err(Error::js_error)?;
             }
         }
     }
