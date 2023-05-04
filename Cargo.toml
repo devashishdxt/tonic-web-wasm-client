@@ -1,6 +1,6 @@
 [package]
 name = "tonic-web-wasm-client"
-version = "0.3.3"
+version = "0.4.0"
 authors = ["Devashish Dixit <devashishdxt@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "grpc-web implementation for use by tonic clients in browsers via webassembly"
