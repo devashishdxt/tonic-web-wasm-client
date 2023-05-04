@@ -9,11 +9,12 @@ use tonic::body::BoxBody;
 use wasm_bindgen::JsValue;
 use web_sys::{Headers, RequestCredentials, RequestInit};
 
-use crate::{fetch::fetch, Error, ResponseBody};
+use crate::{fetch::fetch, options::FetchOptions, Error, ResponseBody};
 
 pub async fn call(
     mut base_url: String,
     request: Request<BoxBody>,
+    options: Option<FetchOptions>,
 ) -> Result<Response<ResponseBody>, Error> {
     base_url.push_str(&request.uri().to_string());
 
@@ -21,7 +22,7 @@ pub async fn call(
     let body = prepare_body(request).await?;
 
     let request = prepare_request(&base_url, headers, body)?;
-    let response = fetch(&request).await?;
+    let response = fetch(&request, options).await?;
 
     let result = Response::builder().status(response.status());
     let (result, content_type) = set_response_headers(result, &response)?;
