@@ -88,7 +88,6 @@ fn prepare_request(
         if let Some(redirect) = options.redirect {
             init.redirect(RequestRedirect::from(redirect));
         }
-        
     }
 
     web_sys::Request::new_with_str_and_init(url, &init).map_err(Error::js_error)
