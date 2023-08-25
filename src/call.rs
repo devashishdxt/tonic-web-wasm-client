@@ -7,7 +7,7 @@ use http_body::Body;
 use js_sys::{Array, Uint8Array};
 use tonic::body::BoxBody;
 use wasm_bindgen::JsValue;
-use web_sys::{Headers, RequestCredentials, RequestInit};
+use web_sys::{Headers, RequestCredentials, RequestInit, RequestMode, RequestCache, RequestRedirect};
 
 use crate::{fetch::fetch, options::FetchOptions, Error, ResponseBody};
 
@@ -76,9 +76,19 @@ fn prepare_request(
         .credentials(RequestCredentials::SameOrigin);
 
     if let Some(options) = options {
+        if let Some(cache) = options.cache {
+            init.cache(RequestCache::from(cache));
+        }
         if let Some(credentials) = options.credentials {
             init.credentials(RequestCredentials::from(credentials));
         }
+        if let Some(mode) = options.mode {
+            init.mode(RequestMode::from(mode));
+        }
+        if let Some(redirect) = options.redirect {
+            init.redirect(RequestRedirect::from(redirect));
+        }
+        
     }
 
     web_sys::Request::new_with_str_and_init(url, &init).map_err(Error::js_error)
