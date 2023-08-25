@@ -21,7 +21,7 @@ pub async fn call(
     let headers = prepare_headers(request.headers())?;
     let body = prepare_body(request).await?;
 
-    let request = prepare_request(&base_url, headers, body)?;
+    let request = prepare_request(&base_url, headers, body, options.clone())?;
     let response = fetch(&request, options).await?;
 
     let result = Response::builder().status(response.status());
@@ -66,6 +66,7 @@ fn prepare_request(
     url: &str,
     headers: Headers,
     body: Option<JsValue>,
+    options: Option<FetchOptions>
 ) -> Result<web_sys::Request, Error> {
     let mut init = RequestInit::new();
 
@@ -73,6 +74,12 @@ fn prepare_request(
         .headers(headers.as_ref())
         .body(body.as_ref())
         .credentials(RequestCredentials::SameOrigin);
+
+    if let Some(options) = options {
+        if let Some(credentials) = options.credentials {
+            init.credentials(RequestCredentials::from(credentials));
+        }
+    }
 
     web_sys::Request::new_with_str_and_init(url, &init).map_err(Error::js_error)
 }
