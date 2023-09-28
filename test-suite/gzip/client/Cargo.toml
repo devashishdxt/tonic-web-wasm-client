@@ -20,4 +20,4 @@ tonic-build = { version = "0.10.1", default-features = false, features = [
 
 [dev-dependencies]
 tonic-web-wasm-client = { path = "../../.." }
-wasm-bindgen-test = "0.3.34"
+wasm-bindgen-test = "0.3.37"

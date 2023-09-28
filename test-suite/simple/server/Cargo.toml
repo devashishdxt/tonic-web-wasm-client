@@ -9,10 +9,10 @@ edition = "2021"
 futures-core = "0.3.28"
 http = "0.2.9"
 prost = "0.12.1"
-tokio = { version = "1.28.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 tonic = "0.10.1"
 tonic-web = "0.10.1"
-tower-http = { version = "0.4.0", default-features = false, features = [
+tower-http = { version = "0.4.4", default-features = false, features = [
     "cors",
 ] }
 
