@@ -14,7 +14,7 @@ extern "C" {
 fn js_fetch(request: &Request, options: Option<FetchOptions>) -> Promise {
     let global = js_sys::global();
 
-    let init = options.map(Into::into).unwrap_or_else(RequestInit::new);
+    let init = options.map(Into::into).unwrap_or_default();
 
     if let Ok(true) = js_sys::Reflect::has(&global, &JsValue::from_str("ServiceWorkerGlobalScope"))
     {
