@@ -6,15 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures-core = "0.3.28"
-http = "0.2.9"
-prost = "0.12.1"
-tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
-tonic = { version = "0.10.1", features = ["gzip"] }
-tonic-web = "0.10.1"
+futures-core = "0.3.30"
+http = "0.2.11"
+prost = "0.12.3"
+tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
+tonic = { version = "0.11.0", features = ["gzip"] }
+tonic-web = "0.11.0"
 tower-http = { version = "0.4.4", default-features = false, features = [
     "cors",
 ] }
 
 [build-dependencies]
-tonic-build = "0.10.1"
+tonic-build = "0.11.0"
