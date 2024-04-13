@@ -1,9 +1,9 @@
 use std::{
+    future::Future,
     pin::Pin,
     task::{Context, Poll},
 };
 
-use futures_util::Future;
 use http::{Request, Response};
 use tonic::body::BoxBody;
 use tower_service::Service;

@@ -1,13 +1,12 @@
 use std::{
     ops::{Deref, DerefMut},
     pin::Pin,
-    task::{Context, Poll},
+    task::{ready, Context, Poll},
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, Bytes, BytesMut};
-use futures_util::ready;
 use http::{header::HeaderName, HeaderMap, HeaderValue};
 use http_body::Body;
 use httparse::{Status, EMPTY_HEADER};
