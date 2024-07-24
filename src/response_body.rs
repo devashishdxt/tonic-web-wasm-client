@@ -144,11 +144,16 @@ impl ResponseBody {
 
         let this = self.project();
 
-        match ready!(this.body_stream.poll_data(cx)) {
-            Some(Ok(data)) => {
-                if let Err(e) = this.buf.append(data) {
-                    return Poll::Ready(Err(e));
-                }
+        match ready!(this.body_stream.poll_frame(cx)) {
+            Some(Ok(frame)) => {
+                match frame.data_ref() {
+                    Some(data) => {
+                        if let Err(e) = this.buf.append(data.clone()) {
+                            return Poll::Ready(Err(e));
+                        }
+                    }
+                    _ => (),
+                };
 
                 Poll::Ready(Ok(()))
             }
@@ -266,14 +271,15 @@ impl Body for ResponseBody {
 
     type Error = Error;
 
-    fn poll_data(
+    fn poll_frame(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
-    ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
+    ) -> Poll<Option<Result<http_body::Frame<Self::Data>, Self::Error>>> {
         // Check if there's already some data in buffer and return that
         if self.data.is_some() {
             let data = self.data.take().unwrap();
-            return Poll::Ready(Some(Ok(data.freeze())));
+
+            return Poll::Ready(Some(Ok(http_body::Frame::data(data.freeze()))));
         }
 
         // If reading data is finished return `None`
@@ -295,43 +301,13 @@ impl Body for ResponseBody {
             if self.data.is_some() {
                 // If data is available in buffer, return that
                 let data = self.data.take().unwrap();
-                return Poll::Ready(Some(Ok(data.freeze())));
+                return Poll::Ready(Some(Ok(http_body::Frame::data(data.freeze()))));
             } else if self.state.finished_data() {
                 // If we finished reading data continue return `None`
                 return Poll::Ready(None);
             } else if self.finished_stream {
                 // If stream is finished but data is not finished return error
                 return Poll::Ready(Some(Err(Error::MalformedResponse)));
-            }
-        }
-    }
-
-    fn poll_trailers(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Result<Option<HeaderMap>, Self::Error>> {
-        // If the state machine is complete, return trailer
-        if self.state.is_done() {
-            return Poll::Ready(Ok(self.trailer.take()));
-        }
-
-        loop {
-            // Read bytes from stream
-            if let Err(e) = ready!(self.as_mut().read_stream(cx)) {
-                return Poll::Ready(Err(e));
-            }
-
-            // Step the state machine
-            if let Err(e) = self.as_mut().step() {
-                return Poll::Ready(Err(e));
-            }
-
-            if self.state.is_done() {
-                // If state machine is done, return trailer
-                return Poll::Ready(Ok(self.trailer.take()));
-            } else if self.finished_stream {
-                // If stream is finished but state machine is not done, return error
-                return Poll::Ready(Err(Error::MalformedResponse));
             }
         }
     }
