@@ -5,7 +5,7 @@ use std::{
 
 use bytes::Bytes;
 use futures_util::{stream::empty, Stream, TryStreamExt};
-use http_body::Body;
+use http_body::{Body, Frame};
 use js_sys::Uint8Array;
 use wasm_streams::readable::IntoStream;
 
@@ -47,18 +47,14 @@ impl Body for BodyStream {
 
     type Error = Error;
 
-    fn poll_data(
+    fn poll_frame(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
-    ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
-        self.body_stream.as_mut().poll_next(cx)
-    }
-
-    fn poll_trailers(
-        self: Pin<&mut Self>,
-        _: &mut Context<'_>,
-    ) -> Poll<Result<Option<http::HeaderMap>, Self::Error>> {
-        Poll::Ready(Ok(None))
+    ) -> Poll<Option<Result<http_body::Frame<Self::Data>, Self::Error>>> {
+        match self.body_stream.as_mut().poll_next(cx) {
+            Poll::Ready(maybe) => Poll::Ready(maybe.map(|result| result.map(Frame::data))),
+            Poll::Pending => Poll::Pending,
+        }
     }
 }
 
