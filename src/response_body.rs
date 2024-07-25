@@ -97,10 +97,6 @@ pub enum ReadState {
 }
 
 impl ReadState {
-    fn is_done(&self) -> bool {
-        matches!(self, ReadState::Done)
-    }
-
     fn finished_data(&self) -> bool {
         matches!(self, ReadState::TrailerLength)
             || matches!(self, ReadState::Trailer(_))
@@ -146,13 +142,10 @@ impl ResponseBody {
 
         match ready!(this.body_stream.poll_frame(cx)) {
             Some(Ok(frame)) => {
-                match frame.data_ref() {
-                    Some(data) => {
-                        if let Err(e) = this.buf.append(data.clone()) {
-                            return Poll::Ready(Err(e));
-                        }
+                if let Some(data) = frame.data_ref() {
+                    if let Err(e) = this.buf.append(data.clone()) {
+                        return Poll::Ready(Err(e));
                     }
-                    _ => (),
                 };
 
                 Poll::Ready(Ok(()))

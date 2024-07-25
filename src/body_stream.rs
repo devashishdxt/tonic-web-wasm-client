@@ -52,9 +52,7 @@ impl Body for BodyStream {
         cx: &mut Context<'_>,
     ) -> Poll<Option<Result<http_body::Frame<Self::Data>, Self::Error>>> {
         match self.body_stream.as_mut().poll_next(cx) {
-            Poll::Ready(maybe) => {
-                Poll::Ready(maybe.map(|result| result.map(|bytes| Frame::data(bytes))))
-            }
+            Poll::Ready(maybe) => Poll::Ready(maybe.map(|result| result.map(Frame::data))),
             Poll::Pending => Poll::Pending,
         }
     }
