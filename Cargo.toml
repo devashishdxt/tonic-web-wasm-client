@@ -12,23 +12,23 @@ keywords = ["grpc", "grpc-web", "tonic", "wasm"]
 edition = "2021"
 
 [dependencies]
-base64 = "0.22.0"
-byteorder = "1.5.0"
-bytes = "1.5.0"
-futures-util = { version = "0.3.30", default-features = false }
+base64 = "0.22"
+byteorder = "1"
+bytes = "1"
+futures-util = { version = "0.3", default-features = false }
 http = "1"
 http-body = "1"
 http-body-util = "0.1"
-httparse = "1.8.0"
-js-sys = "0.3.69"
-pin-project = "1.1.5"
-thiserror = "1.0.57"
+httparse = "1"
+js-sys = "0.3"
+pin-project = "1"
+thiserror = "1"
 tonic = { version = "0.12", default-features = false }
-tower-service = "0.3.2"
-wasm-bindgen = "0.2.92"
-wasm-bindgen-futures = "0.4.42"
-wasm-streams = "0.4.0"
-web-sys = { version = "0.3.69", features = [
+tower-service = "0.3"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+wasm-streams = "0.4"
+web-sys = { version = "0.3", features = [
     "Headers",
     "ReadableStream",
     "ReferrerPolicy",

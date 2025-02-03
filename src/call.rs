@@ -67,12 +67,14 @@ fn prepare_request(
     headers: Headers,
     body: Option<JsValue>,
 ) -> Result<web_sys::Request, Error> {
-    let mut init = RequestInit::new();
+    let init = RequestInit::new();
 
-    init.method("POST")
-        .headers(headers.as_ref())
-        .body(body.as_ref())
-        .credentials(RequestCredentials::SameOrigin);
+    init.set_method("POST");
+    init.set_headers(headers.as_ref());
+    if let Some(ref body) = body {
+        init.set_body(body);
+    }
+    init.set_credentials(RequestCredentials::SameOrigin);
 
     web_sys::Request::new_with_str_and_init(url, &init).map_err(Error::js_error)
 }
