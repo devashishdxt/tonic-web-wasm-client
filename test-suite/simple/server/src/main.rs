@@ -107,10 +107,17 @@ impl Stream for InfiniteMessageStream {
 }
 
 const DEFAULT_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
-const DEFAULT_EXPOSED_HEADERS: [&str; 3] =
-    ["grpc-status", "grpc-message", "grpc-status-details-bin"];
-const DEFAULT_ALLOW_HEADERS: [&str; 4] =
-    ["x-grpc-web", "content-type", "x-user-agent", "grpc-timeout"];
+const DEFAULT_EXPOSED_HEADERS: [HeaderName; 3] = [
+    HeaderName::from_static("grpc-status"),
+    HeaderName::from_static("grpc-message"),
+    HeaderName::from_static("grpc-status-details-bin"),
+];
+const DEFAULT_ALLOW_HEADERS: [HeaderName; 4] = [
+    HeaderName::from_static("x-grpc-web"),
+    HeaderName::from_static("content-type"),
+    HeaderName::from_static("x-user-agent"),
+    HeaderName::from_static("grpc-timeout"),
+];
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -124,20 +131,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .allow_origin(AllowOrigin::mirror_request())
                 .allow_credentials(true)
                 .max_age(DEFAULT_MAX_AGE)
-                .expose_headers(
-                    DEFAULT_EXPOSED_HEADERS
-                        .iter()
-                        .cloned()
-                        .map(HeaderName::from_static)
-                        .collect::<Vec<HeaderName>>(),
-                )
-                .allow_headers(
-                    DEFAULT_ALLOW_HEADERS
-                        .iter()
-                        .cloned()
-                        .map(HeaderName::from_static)
-                        .collect::<Vec<HeaderName>>(),
-                ),
+                .expose_headers(DEFAULT_EXPOSED_HEADERS)
+                .allow_headers(DEFAULT_ALLOW_HEADERS),
         )
         .layer(GrpcWebLayer::new())
         .add_service(echo)
