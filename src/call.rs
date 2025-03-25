@@ -5,7 +5,7 @@ use http::{
 };
 use http_body_util::BodyExt;
 use js_sys::{Array, Uint8Array};
-use tonic::body::BoxBody;
+use tonic::body::Body;
 use wasm_bindgen::JsValue;
 use web_sys::{Headers, RequestCredentials, RequestInit};
 
@@ -13,7 +13,7 @@ use crate::{fetch::fetch, options::FetchOptions, Error, ResponseBody};
 
 pub async fn call(
     mut base_url: String,
-    request: Request<BoxBody>,
+    request: Request<Body>,
     options: Option<FetchOptions>,
 ) -> Result<Response<ResponseBody>, Error> {
     base_url.push_str(&request.uri().to_string());
@@ -57,7 +57,7 @@ fn prepare_headers(header_map: &HeaderMap<HeaderValue>) -> Result<Headers, Error
     Ok(headers)
 }
 
-async fn prepare_body(request: Request<BoxBody>) -> Result<Option<JsValue>, Error> {
+async fn prepare_body(request: Request<Body>) -> Result<Option<JsValue>, Error> {
     let body = Some(request.collect().await?.to_bytes());
     Ok(body.map(|bytes| Uint8Array::from(bytes.as_ref()).into()))
 }

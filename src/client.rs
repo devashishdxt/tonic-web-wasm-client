@@ -5,7 +5,7 @@ use std::{
 };
 
 use http::{Request, Response};
-use tonic::body::BoxBody;
+use tonic::body::Body;
 use tower_service::Service;
 
 use crate::{call::call, options::FetchOptions, Error, ResponseBody};
@@ -41,7 +41,7 @@ impl Client {
     }
 }
 
-impl Service<Request<BoxBody>> for Client {
+impl Service<Request<Body>> for Client {
     type Response = Response<ResponseBody>;
 
     type Error = Error;
@@ -52,7 +52,7 @@ impl Service<Request<BoxBody>> for Client {
         Poll::Ready(Ok(()))
     }
 
-    fn call(&mut self, request: Request<BoxBody>) -> Self::Future {
+    fn call(&mut self, request: Request<Body>) -> Self::Future {
         Box::pin(call(self.base_url.clone(), request, self.options.clone()))
     }
 }
