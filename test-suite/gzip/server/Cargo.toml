@@ -10,9 +10,9 @@ futures-core = "0.3"
 http = "1"
 prost = "0.13"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-tonic = { version = "0.12", features = ["gzip"] }
-tonic-web = "0.12"
+tonic = { version = "0.13", features = ["gzip"] }
+tonic-web = "0.13"
 tower-http = { version = "0.6", default-features = false, features = ["cors"] }
 
 [build-dependencies]
-tonic-build = "0.12"
+tonic-build = "0.13"
