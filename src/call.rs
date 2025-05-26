@@ -1,8 +1,4 @@
-use http::{
-    header::{ACCEPT, CONTENT_TYPE},
-    response::Builder,
-    HeaderMap, HeaderValue, Request, Response,
-};
+use http::{header::CONTENT_TYPE, response::Builder, HeaderMap, HeaderValue, Request, Response};
 use http_body_util::BodyExt;
 use js_sys::{Array, Uint8Array};
 use tonic::body::Body;
@@ -41,13 +37,10 @@ fn prepare_headers(header_map: &HeaderMap<HeaderValue>) -> Result<Headers, Error
     headers
         .append(CONTENT_TYPE.as_str(), "application/grpc-web+proto")
         .map_err(Error::js_error)?;
-    headers
-        .append(ACCEPT.as_str(), "application/grpc-web+proto")
-        .map_err(Error::js_error)?;
     headers.append("x-grpc-web", "1").map_err(Error::js_error)?;
 
     for (header_name, header_value) in header_map.iter() {
-        if header_name != CONTENT_TYPE && header_name != ACCEPT {
+        if header_name != CONTENT_TYPE {
             headers
                 .append(header_name.as_str(), header_value.to_str()?)
                 .map_err(Error::js_error)?;
