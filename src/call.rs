@@ -36,8 +36,8 @@ pub async fn call(
 }
 
 fn prepare_headers(header_map: &HeaderMap<HeaderValue>) -> Result<Headers, Error> {
+    // Construct default headers.
     let headers = Headers::new().map_err(Error::js_error)?;
-
     headers
         .append(CONTENT_TYPE.as_str(), "application/grpc-web+proto")
         .map_err(Error::js_error)?;
@@ -46,10 +46,12 @@ fn prepare_headers(header_map: &HeaderMap<HeaderValue>) -> Result<Headers, Error
         .map_err(Error::js_error)?;
     headers.append("x-grpc-web", "1").map_err(Error::js_error)?;
 
+    // Apply default headers.
     for (header_name, header_value) in header_map.iter() {
-        if header_name != CONTENT_TYPE && header_name != ACCEPT {
+        // Allow default headers to be overridden except for `content-type`.
+        if header_name != CONTENT_TYPE {
             headers
-                .append(header_name.as_str(), header_value.to_str()?)
+                .set(header_name.as_str(), header_value.to_str()?)
                 .map_err(Error::js_error)?;
         }
     }
