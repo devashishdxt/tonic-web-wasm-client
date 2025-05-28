@@ -41,6 +41,12 @@ Other option is to create a `.cargo/config.toml` in your crate repository and ad
 target = "wasm32-unknown-unknown"
 ```
 
+### Custom `Accept` header:
+
+This library allows you to set a custom `Accept` header for the requests. This can be useful if you need to specify
+a different content type for the responses. But, be aware that if you set a custom `Accept` header, the client may
+not be able to handle the response correctly.
+
 ## License
 
 Licensed under either of
