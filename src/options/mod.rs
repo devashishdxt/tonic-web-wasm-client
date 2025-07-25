@@ -5,12 +5,11 @@ mod mode;
 mod redirect;
 mod referrer_policy;
 
-use web_sys::RequestInit;
-
 pub use self::{
     cache::Cache, credentials::Credentials, mode::Mode, redirect::Redirect,
     referrer_policy::ReferrerPolicy,
 };
+use web_sys::{AbortSignal, RequestInit};
 
 /// Options for underlying `fetch` call
 #[derive(Debug, Clone, Default)]
@@ -23,6 +22,8 @@ pub struct FetchOptions {
     pub integrity: Option<String>,
     /// Request's mode
     pub mode: Option<Mode>,
+    /// Request's abort signal
+    pub signal: Option<AbortSignal>,
     /// Request's redirect mode
     pub redirect: Option<Redirect>,
     /// Request's referrer
@@ -58,6 +59,12 @@ impl FetchOptions {
     /// Set request's mode
     pub fn mode(mut self, mode: Mode) -> Self {
         self.mode = Some(mode);
+        self
+    }
+
+    /// Set request's abort signal
+    pub fn signal(mut self, signal: AbortSignal) -> Self {
+        self.signal = Some(signal);
         self
     }
 
@@ -98,6 +105,10 @@ impl From<FetchOptions> for RequestInit {
 
         if let Some(mode) = value.mode {
             init.set_mode(mode.into());
+        }
+
+        if let Some(signal) = value.signal {
+            init.set_signal(Some(&signal));
         }
 
         if let Some(redirect) = value.redirect {
