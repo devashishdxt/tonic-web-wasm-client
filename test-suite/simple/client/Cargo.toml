@@ -7,11 +7,11 @@ edition = "2021"
 
 [dependencies]
 prost = "0.14.1"
-tonic = { version = "0.14", default-features = false, features = ["codegen", "transport"] }
+tonic = { version = "0.14", default-features = false, features = ["codegen"] }
 tonic-prost = { version = "0.14" }
 
 [build-dependencies]
-tonic-prost-build = { version = "0.14" }
+tonic-prost-build = { version = "0.14", default-features = false }
 
 [dev-dependencies]
 tonic-web-wasm-client = { path = "../../.." }
