@@ -11,8 +11,6 @@ use http::{header::HeaderName, HeaderMap, HeaderValue};
 use http_body::Body;
 use httparse::{Status, EMPTY_HEADER};
 use pin_project::pin_project;
-use wasm_bindgen::JsCast;
-use web_sys::ReadableStream;
 
 use crate::{body_stream::BodyStream, content_type::Encoding, Error};
 
@@ -118,12 +116,9 @@ pub struct ResponseBody {
 }
 
 impl ResponseBody {
-    pub(crate) fn new(body_stream: ReadableStream, content_type: &str) -> Result<Self, Error> {
-        let body_stream =
-            wasm_streams::ReadableStream::from_raw(body_stream.unchecked_into()).into_stream();
-
+    pub(crate) fn new(body_stream: BodyStream, content_type: &str) -> Result<Self, Error> {
         Ok(Self {
-            body_stream: BodyStream::new(body_stream),
+            body_stream,
             buf: EncodedBytes::new(content_type)?,
             incomplete_data: BytesMut::new(),
             data: None,

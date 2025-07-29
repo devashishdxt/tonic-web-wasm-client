@@ -1,7 +1,5 @@
 use http::header::{InvalidHeaderName, InvalidHeaderValue, ToStrError};
-use js_sys::Object;
 use thiserror::Error;
-use wasm_bindgen::{JsCast, JsValue};
 
 /// Error type for `tonic-web-wasm-client`
 #[derive(Debug, Error)]
@@ -28,6 +26,7 @@ pub enum Error {
     #[error("invalid header value")]
     InvalidHeaderValue(#[from] InvalidHeaderValue),
     /// JS API error
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     #[error("js api error: {0}")]
     JsError(String),
     /// Malformed response
@@ -42,17 +41,23 @@ pub enum Error {
     /// gRPC error
     #[error("grpc error")]
     TonicStatusError(#[from] tonic::Status),
+    #[cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))]
+    #[error(transparent)]
+    WstdHttp(wstd::http::Error),
 }
 
 impl Error {
     /// Initialize js error from js value
-    pub(crate) fn js_error(value: JsValue) -> Self {
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    pub(crate) fn js_error(value: wasm_bindgen::JsValue) -> Self {
         let message = js_object_display(&value);
         Self::JsError(message)
     }
 }
 
-fn js_object_display(option: &JsValue) -> String {
-    let object: &Object = option.unchecked_ref();
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+fn js_object_display(option: &wasm_bindgen::JsValue) -> String {
+    use wasm_bindgen::JsCast;
+    let object: &js_sys::Object = option.unchecked_ref();
     ToString::to_string(&object.to_string())
 }

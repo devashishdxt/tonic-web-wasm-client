@@ -20,11 +20,14 @@ http = "1"
 http-body = "1"
 http-body-util = "0.1"
 httparse = "1"
-js-sys = "0.3"
 pin-project = "1"
 thiserror = "2"
 tonic = { version = "0.14", default-features = false }
 tower-service = "0.3"
+
+# Browser-specific dependencies
+[target.wasm32-unknown-unknown.dependencies]
+js-sys = "0.3"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 wasm-streams = "0.4"
@@ -42,3 +45,6 @@ web-sys = { version = "0.3", features = [
     "Response",
     "ServiceWorkerGlobalScope",
 ] }
+
+[target.wasm32-wasip2.dependencies]
+wstd = "0.5"

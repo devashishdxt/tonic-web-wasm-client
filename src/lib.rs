@@ -44,13 +44,27 @@
 //! This library allows you to set a custom `Accept` header for the requests. This can be useful if you need to specify
 //! a different content type for the responses. But, be aware that if you set a custom `Accept` header, the client may
 //! not be able to handle the response correctly.
+
 mod body_stream;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod call;
 mod client;
 mod content_type;
 mod error;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod fetch;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub mod options;
+
 mod response_body;
 
-pub use self::{client::Client, error::Error, response_body::ResponseBody};
+#[cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))]
+mod wasip2;
+#[cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))]
+pub(crate) use self::wasip2::call;
+#[cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))]
+pub use self::wasip2::options;
+
+pub use self::response_body::ResponseBody;
+
+pub use self::{client::Client, error::Error};
