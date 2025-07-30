@@ -1,8 +1,10 @@
 use client::proto::{echo_client::EchoClient, EchoRequest};
 use tonic::codegen::CompressionEncoding;
 use tonic_web_wasm_client::Client;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 wasm_bindgen_test_configure!(run_in_browser);
 
 fn build_client() -> EchoClient<Client> {
@@ -12,7 +14,11 @@ fn build_client() -> EchoClient<Client> {
     EchoClient::new(wasm_client).accept_compressed(CompressionEncoding::Gzip)
 }
 
-#[wasm_bindgen_test]
+#[cfg_attr(all(target_arch = "wasm32", target_os = "unknown"), wasm_bindgen_test)]
+#[cfg_attr(
+    all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"),
+    wstd::test
+)]
 async fn test_echo() {
     let mut client = build_client();
 
@@ -27,7 +33,11 @@ async fn test_echo() {
     assert_eq!(response.message, "echo(John)");
 }
 
-#[wasm_bindgen_test]
+#[cfg_attr(all(target_arch = "wasm32", target_os = "unknown"), wasm_bindgen_test)]
+#[cfg_attr(
+    all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"),
+    wstd::test
+)]
 async fn test_echo_stream() {
     let mut client = build_client();
 
@@ -51,7 +61,11 @@ async fn test_echo_stream() {
     assert!(response.is_none());
 }
 
-#[wasm_bindgen_test]
+#[cfg_attr(all(target_arch = "wasm32", target_os = "unknown"), wasm_bindgen_test)]
+#[cfg_attr(
+    all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"),
+    wstd::test
+)]
 async fn test_infinite_echo_stream() {
     let mut client = build_client();
 

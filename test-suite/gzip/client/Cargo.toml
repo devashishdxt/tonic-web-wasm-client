@@ -15,4 +15,10 @@ tonic-prost-build = { version = "0.14", default-features = false }
 
 [dev-dependencies]
 tonic-web-wasm-client = { path = "../../.." }
+
+# Browser-specific dependencies
+[target.wasm32-unknown-unknown.dev-dependencies]
 wasm-bindgen-test = "0.3"
+
+[target.wasm32-wasip2.dependencies]
+wstd = "0.5"

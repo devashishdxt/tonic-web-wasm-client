@@ -10,33 +10,29 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: wasm32-unknown-unknown
+          - target: wasm32-wasip2
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
+      - name: Install Rust from rust-toolchain.toml
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Build
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target wasm32-unknown-unknown
+          args: --target ${{ matrix.target }}
   fmt:
     name: Format Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          components: rustfmt
-          target: wasm32-unknown-unknown
+      - name: Install Rust from rust-toolchain.toml
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:
@@ -45,18 +41,18 @@ jobs:
   clippy:
     name: Clippy Check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: wasm32-unknown-unknown
+          - target: wasm32-wasip2
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          components: clippy
-          target: wasm32-unknown-unknown
+      - name: Install Rust from rust-toolchain.toml
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --target wasm32-unknown-unknown -- -D warnings
+          args: --target ${{ matrix.target }} -- -D warnings

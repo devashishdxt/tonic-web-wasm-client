@@ -10,17 +10,26 @@ jobs:
   test:
     name: Integration Tests with gzip compression
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: wasm32-unknown-unknown
+            recipe: test-gzip-headless
+          - target: wasm32-wasip2
+            recipe: test-gzip-wasip2
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
+      - name: Install Rust from rust-toolchain.toml
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        if: ${{ matrix.target == 'wasm32-unknown-unknown' }}
+      - name: Install wasmtime
+        run: |
+          curl https://wasmtime.dev/install.sh -sSf | bash
+          echo "$HOME/.wasmtime/bin" >> $GITHUB_PATH
+        if: ${{ matrix.target == 'wasm32-wasip2' }}
       - name: Install just
         uses: extractions/setup-just@v1
       - name: Install Protoc
@@ -29,5 +38,5 @@ jobs:
         run: just build-gzip-test-server
       - name: Run test `tonic-web` server
         run: just start-gzip-test-server &
-      - name: Run headless browser test
-        run: just test-gzip-headless
+      - name: Run test ${{ matrix.recipe }}
+        run: just ${{ matrix.recipe }}
