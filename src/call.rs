@@ -7,9 +7,9 @@ use http_body_util::BodyExt;
 use js_sys::{Array, Uint8Array};
 use tonic::body::Body;
 use wasm_bindgen::JsValue;
-use web_sys::{Headers, RequestCredentials, RequestInit};
+use web_sys::{AbortSignal, Headers, RequestCredentials, RequestInit};
 
-use crate::{fetch::fetch, options::FetchOptions, Error, ResponseBody};
+use crate::{abort_guard::AbortGuard, fetch::fetch, options::FetchOptions, Error, ResponseBody};
 
 pub async fn call(
     mut base_url: String,
@@ -21,7 +21,8 @@ pub async fn call(
     let headers = prepare_headers(request.headers())?;
     let body = prepare_body(request).await?;
 
-    let request = prepare_request(&base_url, headers, body)?;
+    let abort = AbortGuard::new()?;
+    let request = prepare_request(&base_url, headers, body, abort.signal())?;
     let response = fetch(&request, options).await?;
 
     let result = Response::builder().status(response.status());
@@ -29,8 +30,7 @@ pub async fn call(
 
     let content_type = content_type.ok_or(Error::MissingContentTypeHeader)?;
     let body_stream = response.body().ok_or(Error::MissingResponseBody)?;
-
-    let body = ResponseBody::new(body_stream, &content_type)?;
+    let body = ResponseBody::new(body_stream, &content_type, abort)?;
 
     result.body(body).map_err(Into::into)
 }
@@ -68,6 +68,7 @@ fn prepare_request(
     url: &str,
     headers: Headers,
     body: Option<JsValue>,
+    signal: AbortSignal,
 ) -> Result<web_sys::Request, Error> {
     let init = RequestInit::new();
 
@@ -77,7 +78,7 @@ fn prepare_request(
         init.set_body(body);
     }
     init.set_credentials(RequestCredentials::SameOrigin);
-
+    init.set_signal(Some(&signal));
     web_sys::Request::new_with_str_and_init(url, &init).map_err(Error::js_error)
 }
 
