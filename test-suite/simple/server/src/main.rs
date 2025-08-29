@@ -33,6 +33,18 @@ impl Echo for EchoService {
         }))
     }
 
+    async fn echo_timeout(
+        &self,
+        request: Request<EchoRequest>,
+    ) -> Result<Response<EchoResponse>, Status> {
+        let request = request.into_inner();
+        // Simulate a long processing time to trigger client timeout
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        Ok(Response::new(EchoResponse {
+            message: format!("echo({})", request.message),
+        }))
+    }
+
     async fn echo_stream(
         &self,
         request: Request<EchoRequest>,

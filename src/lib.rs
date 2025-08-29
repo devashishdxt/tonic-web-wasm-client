@@ -44,6 +44,7 @@
 //! This library allows you to set a custom `Accept` header for the requests. This can be useful if you need to specify
 //! a different content type for the responses. But, be aware that if you set a custom `Accept` header, the client may
 //! not be able to handle the response correctly.
+mod abort_guard;
 mod body_stream;
 mod call;
 mod client;

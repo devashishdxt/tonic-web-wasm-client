@@ -5,10 +5,12 @@ use web_sys::RequestCredentials;
 pub enum Credentials {
     /// Excludes credentials from this request, and causes any credentials sent back in the response to be ignored.
     Omit,
+
     /// Include credentials with requests made to same-origin URLs, and use any credentials sent back in responses from
     /// same-origin URLs.
     #[default]
     SameOrigin,
+
     /// Always includes credentials with this request, and always use any credentials sent back in the response.
     Include,
 }

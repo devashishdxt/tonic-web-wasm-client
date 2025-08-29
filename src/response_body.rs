@@ -14,7 +14,7 @@ use pin_project::pin_project;
 use wasm_bindgen::JsCast;
 use web_sys::ReadableStream;
 
-use crate::{body_stream::BodyStream, content_type::Encoding, Error};
+use crate::{abort_guard::AbortGuard, body_stream::BodyStream, content_type::Encoding, Error};
 
 /// If 8th MSB of a frame is `0` for data and `1` for trailer
 const TRAILER_BIT: u8 = 0b10000000;
@@ -118,12 +118,16 @@ pub struct ResponseBody {
 }
 
 impl ResponseBody {
-    pub(crate) fn new(body_stream: ReadableStream, content_type: &str) -> Result<Self, Error> {
+    pub(crate) fn new(
+        body_stream: ReadableStream,
+        content_type: &str,
+        abort: AbortGuard,
+    ) -> Result<Self, Error> {
         let body_stream =
             wasm_streams::ReadableStream::from_raw(body_stream.unchecked_into()).into_stream();
 
         Ok(Self {
-            body_stream: BodyStream::new(body_stream),
+            body_stream: BodyStream::new(body_stream, abort),
             buf: EncodedBytes::new(content_type)?,
             incomplete_data: BytesMut::new(),
             data: None,

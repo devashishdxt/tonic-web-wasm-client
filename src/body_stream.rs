@@ -9,14 +9,15 @@ use http_body::{Body, Frame};
 use js_sys::Uint8Array;
 use wasm_streams::readable::IntoStream;
 
-use crate::Error;
+use crate::{abort_guard::AbortGuard, Error};
 
 pub struct BodyStream {
     body_stream: Pin<Box<dyn Stream<Item = Result<Bytes, Error>>>>,
+    _abort: Option<AbortGuard>,
 }
 
 impl BodyStream {
-    pub fn new(body_stream: IntoStream<'static>) -> Self {
+    pub fn new(body_stream: IntoStream<'static>, abort: AbortGuard) -> Self {
         let body_stream = body_stream
             .map_ok(|js_value| {
                 let buffer = Uint8Array::new(&js_value);
@@ -30,6 +31,7 @@ impl BodyStream {
 
         Self {
             body_stream: Box::pin(body_stream),
+            _abort: Some(abort),
         }
     }
 
@@ -38,6 +40,7 @@ impl BodyStream {
 
         Self {
             body_stream: Box::pin(body_stream),
+            _abort: None,
         }
     }
 }
