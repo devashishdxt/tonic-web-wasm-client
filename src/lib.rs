@@ -7,7 +7,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! tonic-web-wasm-client = "0.7"
+//! tonic-web-wasm-client = "0.8"
 //! ```
 //!
 //! ## Example
