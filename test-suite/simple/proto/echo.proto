@@ -10,6 +10,8 @@ service Echo {
   rpc EchoInfiniteStream (EchoRequest) returns (stream EchoResponse) {}
 
   rpc EchoErrorResponse (EchoRequest) returns (EchoResponse) {}
+
+  rpc EchoTimeout (EchoRequest) returns (EchoResponse) {}
 }
 
 message EchoRequest {

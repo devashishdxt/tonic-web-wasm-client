@@ -53,6 +53,10 @@ impl Service<Request<Body>> for Client {
     }
 
     fn call(&mut self, request: Request<Body>) -> Self::Future {
-        Box::pin(call(self.base_url.clone(), request, self.options.clone()))
+        Box::pin(call(
+            self.base_url.clone(),
+            request,
+            self.options.clone().unwrap_or_default(),
+        ))
     }
 }

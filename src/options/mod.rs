@@ -5,31 +5,42 @@ mod mode;
 mod redirect;
 mod referrer_policy;
 
+use std::time::Duration;
+
+use crate::abort_guard::AbortGuard;
+
 pub use self::{
     cache::Cache, credentials::Credentials, mode::Mode, redirect::Redirect,
     referrer_policy::ReferrerPolicy,
 };
-use web_sys::{AbortSignal, RequestInit};
+use web_sys::RequestInit;
 
 /// Options for underlying `fetch` call
 #[derive(Debug, Clone, Default)]
 pub struct FetchOptions {
     /// Request's cache mode
     pub cache: Option<Cache>,
+
     /// Request's credentials mode
     pub credentials: Option<Credentials>,
+
     /// Requests's integrity
     pub integrity: Option<String>,
+
     /// Request's mode
     pub mode: Option<Mode>,
-    /// Request's abort signal
-    pub signal: Option<AbortSignal>,
+
     /// Request's redirect mode
     pub redirect: Option<Redirect>,
+
     /// Request's referrer
     pub referrer: Option<String>,
+
     /// Request's referrer policy
     pub referrer_policy: Option<ReferrerPolicy>,
+
+    /// Request's timeout duration
+    pub timeout: Option<Duration>,
 }
 
 impl FetchOptions {
@@ -62,12 +73,6 @@ impl FetchOptions {
         self
     }
 
-    /// Set request's abort signal
-    pub fn signal(mut self, signal: AbortSignal) -> Self {
-        self.signal = Some(signal);
-        self
-    }
-
     /// Set request's redirect mode
     pub fn redirect(mut self, redirect: Redirect) -> Self {
         self.redirect = Some(redirect);
@@ -85,44 +90,52 @@ impl FetchOptions {
         self.referrer_policy = Some(referrer_policy);
         self
     }
-}
 
-impl From<FetchOptions> for RequestInit {
-    fn from(value: FetchOptions) -> Self {
+    /// Set request's timeout duration
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    pub(crate) fn request_init(&self) -> Result<(RequestInit, AbortGuard), crate::Error> {
         let init = RequestInit::new();
 
-        if let Some(cache) = value.cache {
+        if let Some(cache) = self.cache {
             init.set_cache(cache.into());
         }
 
-        if let Some(credentials) = value.credentials {
+        if let Some(credentials) = self.credentials {
             init.set_credentials(credentials.into());
         }
 
-        if let Some(ref integrity) = value.integrity {
+        if let Some(ref integrity) = self.integrity {
             init.set_integrity(integrity);
         }
 
-        if let Some(mode) = value.mode {
+        if let Some(mode) = self.mode {
             init.set_mode(mode.into());
         }
 
-        if let Some(signal) = value.signal {
-            init.set_signal(Some(&signal));
-        }
-
-        if let Some(redirect) = value.redirect {
+        if let Some(redirect) = self.redirect {
             init.set_redirect(redirect.into());
         }
 
-        if let Some(ref referrer) = value.referrer {
+        if let Some(ref referrer) = self.referrer {
             init.set_referrer(referrer);
         }
 
-        if let Some(referrer_policy) = value.referrer_policy {
+        if let Some(referrer_policy) = self.referrer_policy {
             init.set_referrer_policy(referrer_policy.into());
         }
 
-        init
+        let mut abort = AbortGuard::new()?;
+
+        if let Some(timeout) = self.timeout {
+            abort.timeout(timeout);
+        }
+
+        init.set_signal(Some(&abort.signal()));
+
+        Ok((init, abort))
     }
 }

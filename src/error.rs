@@ -48,7 +48,12 @@ impl Error {
     /// Initialize js error from js value
     pub(crate) fn js_error(value: JsValue) -> Self {
         let message = js_object_display(&value);
-        Self::JsError(message)
+
+        if message.contains("tonic_web_wasm_client::Error::TimedOut") {
+            Self::TonicStatusError(tonic::Status::deadline_exceeded("Request timed out"))
+        } else {
+            Self::JsError(message)
+        }
     }
 }
 

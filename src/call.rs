@@ -14,7 +14,7 @@ use crate::{fetch::fetch, options::FetchOptions, Error, ResponseBody};
 pub async fn call(
     mut base_url: String,
     request: Request<Body>,
-    options: Option<FetchOptions>,
+    options: FetchOptions,
 ) -> Result<Response<ResponseBody>, Error> {
     base_url.push_str(&request.uri().to_string());
 
@@ -22,7 +22,8 @@ pub async fn call(
     let body = prepare_body(request).await?;
 
     let request = prepare_request(&base_url, headers, body)?;
-    let response = fetch(&request, options).await?;
+    let (init, abort) = options.request_init()?;
+    let response = fetch(&request, &init).await?;
 
     let result = Response::builder().status(response.status());
     let (result, content_type) = set_response_headers(result, &response)?;
@@ -30,7 +31,7 @@ pub async fn call(
     let content_type = content_type.ok_or(Error::MissingContentTypeHeader)?;
     let body_stream = response.body().ok_or(Error::MissingResponseBody)?;
 
-    let body = ResponseBody::new(body_stream, &content_type)?;
+    let body = ResponseBody::new(body_stream, &content_type, abort)?;
 
     result.body(body).map_err(Into::into)
 }
