@@ -16,7 +16,7 @@ pub enum Error {
     #[error("failed to convert header value to string")]
     HeaderValueError(#[from] ToStrError),
     /// HTTP error
-    #[error("http error")]
+    #[error("HTTP error")]
     HttpError(#[from] http::Error),
     /// Invalid content type
     #[error("invalid content type: {0}")]
@@ -28,19 +28,19 @@ pub enum Error {
     #[error("invalid header value")]
     InvalidHeaderValue(#[from] InvalidHeaderValue),
     /// JS API error
-    #[error("js api error: {0}")]
+    #[error("JS API error: {0}")]
     JsError(String),
     /// Malformed response
     #[error("malformed response")]
     MalformedResponse,
     /// Missing `content-type` header in gRPC response
-    #[error("missing content-type header in grpc response")]
+    #[error("missing content-type header in gRPC response")]
     MissingContentTypeHeader,
     /// Missing response body in HTTP call
     #[error("missing response body in HTTP call")]
     MissingResponseBody,
     /// gRPC error
-    #[error("grpc error")]
+    #[error("gRPC error")]
     TonicStatusError(#[from] tonic::Status),
 }
 
