@@ -1,20 +1,20 @@
 use std::{
     ops::{Deref, DerefMut},
     pin::Pin,
-    task::{ready, Context, Poll},
+    task::{Context, Poll, ready},
 };
 
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, Bytes, BytesMut};
-use http::{header::HeaderName, HeaderMap, HeaderValue};
+use http::{HeaderMap, HeaderValue, header::HeaderName};
 use http_body::Body;
-use httparse::{Status, EMPTY_HEADER};
+use httparse::{EMPTY_HEADER, Status};
 use pin_project::pin_project;
 use wasm_bindgen::JsCast;
 use web_sys::ReadableStream;
 
-use crate::{abort_guard::AbortGuard, body_stream::BodyStream, content_type::Encoding, Error};
+use crate::{Error, abort_guard::AbortGuard, body_stream::BodyStream, content_type::Encoding};
 
 /// If 8th MSB of a frame is `0` for data and `1` for trailer
 const TRAILER_BIT: u8 = 0b10000000;
@@ -146,10 +146,10 @@ impl ResponseBody {
 
         match ready!(this.body_stream.poll_frame(cx)) {
             Some(Ok(frame)) => {
-                if let Some(data) = frame.data_ref() {
-                    if let Err(e) = this.buf.append(data.clone()) {
-                        return Poll::Ready(Err(e));
-                    }
+                if let Some(data) = frame.data_ref()
+                    && let Err(e) = this.buf.append(data.clone())
+                {
+                    return Poll::Ready(Err(e));
                 };
 
                 Poll::Ready(Ok(()))

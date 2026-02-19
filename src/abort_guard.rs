@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use js_sys::Function;
 use wasm_bindgen::{
-    prelude::{wasm_bindgen, Closure},
     JsCast, JsValue,
+    prelude::{Closure, wasm_bindgen},
 };
 use web_sys::{AbortController, AbortSignal};
 

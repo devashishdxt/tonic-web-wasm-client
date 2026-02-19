@@ -9,7 +9,7 @@ repository = "https://github.com/devashishdxt/tonic-web-wasm-client"
 readme = "README.md"
 categories = ["web-programming", "network-programming", "asynchronous"]
 keywords = ["grpc", "grpc-web", "tonic", "wasm"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 base64 = "0.22"

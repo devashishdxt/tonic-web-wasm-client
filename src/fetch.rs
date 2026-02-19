@@ -1,5 +1,5 @@
 use js_sys::Promise;
-use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, Response};
 
@@ -13,14 +13,13 @@ extern "C" {
 
 fn js_fetch(request: &Request, init: &RequestInit) -> Promise {
     let global = js_sys::global();
+    let key = JsValue::from_str("ServiceWorkerGlobalScope");
 
-    if let Ok(true) = js_sys::Reflect::has(&global, &JsValue::from_str("ServiceWorkerGlobalScope"))
-    {
-        global
+    match js_sys::Reflect::has(&global, &key) {
+        Ok(true) => global
             .unchecked_into::<web_sys::ServiceWorkerGlobalScope>()
-            .fetch_with_request_and_init(request, init)
-    } else {
-        fetch_with_request_and_init(request, init)
+            .fetch_with_request_and_init(request, init),
+        _ => fetch_with_request_and_init(request, init),
     }
 }
 

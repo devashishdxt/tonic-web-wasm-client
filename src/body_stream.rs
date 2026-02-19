@@ -4,12 +4,12 @@ use std::{
 };
 
 use bytes::Bytes;
-use futures_util::{stream::empty, Stream, TryStreamExt};
+use futures_util::{Stream, TryStreamExt, stream::empty};
 use http_body::{Body, Frame};
 use js_sys::Uint8Array;
 use wasm_streams::readable::IntoStream;
 
-use crate::{abort_guard::AbortGuard, Error};
+use crate::{Error, abort_guard::AbortGuard};
 
 pub struct BodyStream {
     body_stream: Pin<Box<dyn Stream<Item = Result<Bytes, Error>>>>,
