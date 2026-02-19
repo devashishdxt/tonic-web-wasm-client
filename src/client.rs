@@ -8,7 +8,7 @@ use http::{Request, Response};
 use tonic::body::Body;
 use tower_service::Service;
 
-use crate::{call::call, options::FetchOptions, Error, ResponseBody};
+use crate::{Error, ResponseBody, call::call, options::FetchOptions};
 
 /// `grpc-web` based transport layer for `tonic` clients
 #[derive(Debug, Clone)]

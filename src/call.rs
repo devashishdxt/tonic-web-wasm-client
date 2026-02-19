@@ -1,7 +1,7 @@
 use http::{
+    HeaderMap, HeaderValue, Request, Response,
     header::{ACCEPT, CONTENT_TYPE},
     response::Builder,
-    HeaderMap, HeaderValue, Request, Response,
 };
 use http_body_util::BodyExt;
 use js_sys::{Array, Uint8Array};
@@ -9,7 +9,7 @@ use tonic::body::Body;
 use wasm_bindgen::JsValue;
 use web_sys::{Headers, RequestCredentials, RequestInit};
 
-use crate::{fetch::fetch, options::FetchOptions, Error, ResponseBody};
+use crate::{Error, ResponseBody, fetch::fetch, options::FetchOptions};
 
 pub async fn call(
     mut base_url: String,
