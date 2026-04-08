@@ -279,8 +279,11 @@ impl Body for ResponseBody {
             return Poll::Ready(Some(Ok(http_body::Frame::data(data.freeze()))));
         }
 
-        // If reading data is finished return `None`
+        // If reading data is finished, return trailers (if available) before ending
         if self.state.finished_data() {
+            if let Some(trailers) = self.trailer.take() {
+                return Poll::Ready(Some(Ok(http_body::Frame::trailers(trailers))));
+            }
             return Poll::Ready(None);
         }
 
@@ -300,7 +303,10 @@ impl Body for ResponseBody {
                 let data = self.data.take().unwrap();
                 return Poll::Ready(Some(Ok(http_body::Frame::data(data.freeze()))));
             } else if self.state.finished_data() {
-                // If we finished reading data continue return `None`
+                // If we finished reading data, return trailers before ending
+                if let Some(trailers) = self.trailer.take() {
+                    return Poll::Ready(Some(Ok(http_body::Frame::trailers(trailers))));
+                }
                 return Poll::Ready(None);
             } else if self.finished_stream {
                 // If stream is finished but data is not finished return error

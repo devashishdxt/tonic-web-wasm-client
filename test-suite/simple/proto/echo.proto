@@ -12,6 +12,8 @@ service Echo {
   rpc EchoErrorResponse (EchoRequest) returns (EchoResponse) {}
 
   rpc EchoTimeout (EchoRequest) returns (EchoResponse) {}
+
+  rpc EchoStreamError (EchoRequest) returns (stream EchoResponse) {}
 }
 
 message EchoRequest {
