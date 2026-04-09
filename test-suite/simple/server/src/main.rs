@@ -61,6 +61,16 @@ impl Echo for EchoService {
         Ok(Response::new(InfiniteMessageStream::new(request.message)))
     }
 
+    type EchoStreamErrorStream = ErrorAfterMessagesStream;
+
+    async fn echo_stream_error(
+        &self,
+        request: Request<EchoRequest>,
+    ) -> Result<Response<Self::EchoStreamErrorStream>, Status> {
+        let request = request.into_inner();
+        Ok(Response::new(ErrorAfterMessagesStream::new(request.message)))
+    }
+
     async fn echo_error_response(
         &self,
         _: tonic::Request<EchoRequest>,
@@ -115,6 +125,32 @@ impl Stream for InfiniteMessageStream {
         Poll::Ready(Some(Ok(EchoResponse {
             message: format!("echo({}, {})", self.message, self.count),
         })))
+    }
+}
+
+pub struct ErrorAfterMessagesStream {
+    message: String,
+    count: u8,
+}
+
+impl ErrorAfterMessagesStream {
+    pub fn new(message: String) -> Self {
+        Self { message, count: 0 }
+    }
+}
+
+impl Stream for ErrorAfterMessagesStream {
+    type Item = Result<EchoResponse, Status>;
+
+    fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        if self.count < 2 {
+            self.count += 1;
+            Poll::Ready(Some(Ok(EchoResponse {
+                message: format!("echo({})", self.message),
+            })))
+        } else {
+            Poll::Ready(Some(Err(Status::internal("stream error after 2 messages"))))
+        }
     }
 }
 
