@@ -94,6 +94,34 @@ async fn test_infinite_echo_stream() {
 }
 
 #[wasm_bindgen_test]
+async fn test_echo_stream_error() {
+    let mut client = build_client();
+
+    let mut stream_response = client
+        .echo_stream_error(EchoRequest {
+            message: "John".to_string(),
+        })
+        .await
+        .expect("success stream response")
+        .into_inner();
+
+    // First two messages should succeed
+    for i in 0..2 {
+        let response = stream_response.message().await.expect("stream message");
+        assert!(response.is_some(), "message {} should be present", i);
+        assert_eq!(response.unwrap().message, "echo(John)");
+    }
+
+    // Third message should be an error from the trailer
+    let error = stream_response
+        .message()
+        .await
+        .expect_err("should receive error from trailer");
+    assert_eq!(error.code(), Code::Internal);
+    assert_eq!(error.message(), "stream error after 2 messages");
+}
+
+#[wasm_bindgen_test]
 async fn test_error_response() {
     let mut client = build_client();
 
