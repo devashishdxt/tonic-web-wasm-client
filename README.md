@@ -9,10 +9,11 @@ To use `tonic-web-wasm-client`, you need to add the following to your `Cargo.tom
 
 ```toml
 [dependencies]
-tonic-web-wasm-client = "0.8"
+tonic-web-wasm-client = "0.9"
 ```
 
 ### Example
+
 To use `tonic` gRPC clients in browser, compile your code with tonic's `transport` feature disabled (this will disable
 the default transport layer of tonic). Then initialize the query client as follows:
 
