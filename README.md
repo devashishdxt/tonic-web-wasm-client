@@ -1,5 +1,9 @@
 # tonic-web-wasm-client
 
+> [!IMPORTANT]
+> This is a temporary Rerun fork that includes https://github.com/devashishdxt/tonic-web-wasm-client/pull/90.
+> The real repository is [`devashishdxt/tonic-web-wasm-client`](https://github.com/devashishdxt/tonic-web-wasm-client).
+
 Rust implementation of [`grpc-web`](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md) protocol that allows
 using [`tonic`](https://crates.io/crates/tonic) in browsers via webassembly.
 
