@@ -5,8 +5,7 @@ use std::{
 };
 
 use base64::{Engine, prelude::BASE64_STANDARD};
-use byteorder::{BigEndian, ByteOrder};
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use http::{HeaderMap, HeaderValue, header::HeaderName};
 use http_body::Body;
 use httparse::{EMPTY_HEADER, Status};
@@ -188,7 +187,8 @@ impl ResponseBody {
                         return Ok(());
                     } else {
                         let data_length_bytes = this.buf.take(4);
-                        let data_length = BigEndian::read_u32(data_length_bytes.as_ref());
+                        // According to [`Buf::get_u32`] docs returns u32 from big-endian bytes
+                        let data_length = (&data_length_bytes[..]).get_u32();
 
                         this.incomplete_data.unsplit(data_length_bytes);
                         *this.state = ReadState::Data(data_length);
@@ -220,7 +220,8 @@ impl ResponseBody {
                         return Ok(());
                     } else {
                         let trailer_length_bytes = this.buf.take(4);
-                        let trailer_length = BigEndian::read_u32(trailer_length_bytes.as_ref());
+                        // According to [`Buf::get_u32`] docs returns u32 from big-endian bytes
+                        let trailer_length = (&trailer_length_bytes[..]).get_u32();
                         *this.state = ReadState::Trailer(trailer_length);
                     }
                 }
