@@ -187,6 +187,7 @@ impl ResponseBody {
                         return Ok(());
                     } else {
                         let data_length_bytes = this.buf.take(4);
+                        // According to [`Buf::get_u32`] docs returns u32 from big-endian bytes
                         let data_length = (&data_length_bytes[..]).get_u32();
 
                         this.incomplete_data.unsplit(data_length_bytes);
@@ -219,6 +220,7 @@ impl ResponseBody {
                         return Ok(());
                     } else {
                         let trailer_length_bytes = this.buf.take(4);
+                        // According to [`Buf::get_u32`] docs returns u32 from big-endian bytes
                         let trailer_length = (&trailer_length_bytes[..]).get_u32();
                         *this.state = ReadState::Trailer(trailer_length);
                     }
