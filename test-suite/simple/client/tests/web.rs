@@ -32,6 +32,27 @@ async fn test_echo() {
 }
 
 #[wasm_bindgen_test]
+async fn test_echo_text_response() {
+    let mut client = build_client();
+
+    let mut request = tonic::Request::new(EchoRequest {
+        message: "John".to_string(),
+    });
+    // Keep the request binary, but ask tonic-web to base64-encode the response.
+    request
+        .metadata_mut()
+        .insert("accept", "application/grpc-web-text+proto".parse().unwrap());
+
+    let response = client
+        .echo(request)
+        .await
+        .expect("success text response")
+        .into_inner();
+
+    assert_eq!(response.message, "echo(John)");
+}
+
+#[wasm_bindgen_test]
 async fn test_echo_timeout() {
     let mut client = build_client();
 

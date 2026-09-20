@@ -15,6 +15,9 @@ use web_sys::ReadableStream;
 
 use crate::{Error, abort_guard::AbortGuard, body_stream::BodyStream, content_type::Encoding};
 
+#[cfg(test)]
+mod tests;
+
 /// If 8th MSB of a frame is `0` for data and `1` for trailer
 const TRAILER_BIT: u8 = 0b10000000;
 
@@ -33,19 +36,24 @@ impl EncodedBytes {
         })
     }
 
-    // This is to avoid passing a slice of bytes with a length that the base64
-    // decoder would consider invalid.
+    // Return the largest prefix that can be decoded in one call. Keep incomplete
+    // quartets buffered and stop after the first padded quartet, since gRPC-web
+    // can concatenate independently padded base64 segments.
     #[inline]
     fn max_decodable(&self) -> usize {
-        (self.raw_buf.len() / 4) * 4
+        let complete_quartets = (self.raw_buf.len() / 4) * 4;
+        self.raw_buf[..complete_quartets]
+            .iter()
+            .position(|&byte| byte == b'=')
+            .map_or(complete_quartets, |position| (position / 4 + 1) * 4)
     }
 
     fn decode_base64_chunk(&mut self) -> Result<(), Error> {
-        let index = self.max_decodable();
+        while self.raw_buf.len() >= 4 {
+            let index = self.max_decodable();
 
-        if self.raw_buf.len() >= index {
             let decoded = BASE64_STANDARD
-                .decode(self.buf.split_to(index))
+                .decode(self.raw_buf.split_to(index))
                 .map(Bytes::from)?;
             self.buf.put(decoded);
         }
