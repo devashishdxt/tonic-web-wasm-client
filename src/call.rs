@@ -1,5 +1,5 @@
 use http::{
-    HeaderMap, HeaderValue, Request, Response,
+    HeaderMap, HeaderValue, Request, Response, Uri,
     header::{ACCEPT, CONTENT_TYPE},
     response::Builder,
 };
@@ -16,7 +16,7 @@ pub async fn call(
     request: Request<Body>,
     options: FetchOptions,
 ) -> Result<Response<ResponseBody>, Error> {
-    base_url.push_str(&request.uri().to_string());
+    push_path(&mut base_url, request.uri());
 
     let headers = prepare_headers(request.headers())?;
     let body = prepare_body(request).await?;
@@ -34,6 +34,15 @@ pub async fn call(
     let body = ResponseBody::new(body_stream, &content_type, abort)?;
 
     result.body(body).map_err(Into::into)
+}
+
+/// Appends the request's path to the base URL. Only the path: for a client built `with_origin`,
+/// tonic also puts the origin's scheme and authority into the URI, and the base URL already names
+/// the server. A trailing `/` on the base URL is dropped, since the path starts with one.
+fn push_path(base_url: &mut String, uri: &Uri) {
+    let path = uri.path_and_query().map_or("/", |path| path.as_str());
+    base_url.truncate(base_url.trim_end_matches('/').len());
+    base_url.push_str(path);
 }
 
 fn prepare_headers(header_map: &HeaderMap<HeaderValue>) -> Result<Headers, Error> {
@@ -114,4 +123,50 @@ fn set_response_headers(
     }
 
     Ok((result, content_type))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn url(base_url: &str, uri: &str) -> String {
+        let mut url = base_url.to_string();
+        push_path(&mut url, &uri.parse().unwrap());
+        url
+    }
+
+    #[test]
+    fn appends_the_path_to_the_base_url() {
+        assert_eq!(
+            url("http://localhost:50051", "/echo.Echo/Echo"),
+            "http://localhost:50051/echo.Echo/Echo"
+        );
+        assert_eq!(
+            url("http://localhost:50051/api", "/echo.Echo/Echo"),
+            "http://localhost:50051/api/echo.Echo/Echo"
+        );
+    }
+
+    #[test]
+    fn drops_a_trailing_slash_from_the_base_url() {
+        assert_eq!(
+            url("http://localhost:50051/", "/echo.Echo/Echo"),
+            "http://localhost:50051/echo.Echo/Echo"
+        );
+        assert_eq!(
+            url("http://localhost:50051/api/", "/echo.Echo/Echo"),
+            "http://localhost:50051/api/echo.Echo/Echo"
+        );
+    }
+
+    #[test]
+    fn ignores_the_scheme_and_authority_of_an_origin() {
+        assert_eq!(
+            url(
+                "http://localhost:50051",
+                "http://example.com/echo.Echo/Echo"
+            ),
+            "http://localhost:50051/echo.Echo/Echo"
+        );
+    }
 }
