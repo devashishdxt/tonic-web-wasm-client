@@ -43,12 +43,19 @@ impl AbortGuard {
         });
         let timeout = set_timeout(
             abort.as_ref().unchecked_ref::<js_sys::Function>(),
-            timeout.as_millis().try_into().expect("timeout"),
+            timeout_millis(timeout),
         );
         if let Some((id, _)) = self.timeout.replace((timeout, abort)) {
             clear_timeout(id);
         }
     }
+}
+
+/// The `setTimeout` delay for `timeout`. The delay is a signed 32-bit number of milliseconds, and
+/// browsers fire at once for a larger one, so a longer timeout is clamped to the largest delay,
+/// about 24.8 days.
+fn timeout_millis(timeout: Duration) -> i32 {
+    timeout.as_millis().try_into().unwrap_or(i32::MAX)
 }
 
 impl Drop for AbortGuard {
@@ -58,5 +65,20 @@ impl Drop for AbortGuard {
         if let Some((id, _)) = self.timeout.take() {
             clear_timeout(id);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn timeout_is_clamped_to_the_largest_set_timeout_delay() {
+        let largest = Duration::from_millis(i32::MAX as u64);
+
+        assert_eq!(timeout_millis(Duration::from_millis(1500)), 1500);
+        assert_eq!(timeout_millis(largest), i32::MAX);
+        assert_eq!(timeout_millis(largest + Duration::from_millis(1)), i32::MAX);
+        assert_eq!(timeout_millis(Duration::MAX), i32::MAX);
     }
 }
