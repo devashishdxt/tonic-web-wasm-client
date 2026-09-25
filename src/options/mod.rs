@@ -1,6 +1,7 @@
 //! Options for underlying `fetch` call
 mod cache;
 mod credentials;
+mod grpc_timeout;
 mod mode;
 mod redirect;
 mod referrer_policy;
@@ -13,6 +14,7 @@ pub use self::{
     cache::Cache, credentials::Credentials, mode::Mode, redirect::Redirect,
     referrer_policy::ReferrerPolicy,
 };
+use http::HeaderValue;
 use web_sys::RequestInit;
 
 /// Options for underlying `fetch` call
@@ -92,12 +94,18 @@ impl FetchOptions {
     }
 
     /// Set request's timeout duration
+    ///
+    /// A request's own deadline, set with `tonic::Request::set_timeout`, applies too: whichever is
+    /// shorter ends the call.
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = Some(timeout);
         self
     }
 
-    pub(crate) fn request_init(&self) -> Result<(RequestInit, AbortGuard), crate::Error> {
+    pub(crate) fn request_init(
+        &self,
+        grpc_timeout: Option<&HeaderValue>,
+    ) -> Result<(RequestInit, AbortGuard), crate::Error> {
         let init = RequestInit::new();
 
         if let Some(cache) = self.cache {
@@ -130,7 +138,7 @@ impl FetchOptions {
 
         let mut abort = AbortGuard::new()?;
 
-        if let Some(timeout) = self.timeout {
+        if let Some(timeout) = grpc_timeout::effective(self.timeout, grpc_timeout) {
             abort.timeout(timeout);
         }
 
