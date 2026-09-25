@@ -14,6 +14,9 @@ service Echo {
   rpc EchoTimeout (EchoRequest) returns (EchoResponse) {}
 
   rpc EchoStreamError (EchoRequest) returns (stream EchoResponse) {}
+
+  // Answers with the values of the request metadata key named in the message.
+  rpc EchoMetadata (EchoRequest) returns (EchoResponse) {}
 }
 
 message EchoRequest {

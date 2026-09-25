@@ -47,12 +47,24 @@ fn prepare_headers(header_map: &HeaderMap<HeaderValue>) -> Result<Headers, Error
         .map_err(Error::js_error)?;
     headers.append("x-grpc-web", "1").map_err(Error::js_error)?;
 
-    // Apply default headers.
-    for (header_name, header_value) in header_map.iter() {
+    // Apply request headers.
+    for header_name in header_map.keys() {
         // Allow default headers to be overridden except for `content-type`.
-        if header_name != CONTENT_TYPE {
+        if header_name == CONTENT_TYPE {
+            continue;
+        }
+
+        // `set` the first value, which replaces a default header, and `append` the rest, since a
+        // metadata key can have several values.
+        let mut values = header_map.get_all(header_name).iter();
+        if let Some(value) = values.next() {
             headers
-                .set(header_name.as_str(), header_value.to_str()?)
+                .set(header_name.as_str(), value.to_str()?)
+                .map_err(Error::js_error)?;
+        }
+        for value in values {
+            headers
+                .append(header_name.as_str(), value.to_str()?)
                 .map_err(Error::js_error)?;
         }
     }

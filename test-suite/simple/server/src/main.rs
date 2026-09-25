@@ -71,6 +71,21 @@ impl Echo for EchoService {
         Ok(Response::new(ErrorAfterMessagesStream::new(request.message)))
     }
 
+    async fn echo_metadata(
+        &self,
+        request: Request<EchoRequest>,
+    ) -> Result<Response<EchoResponse>, Status> {
+        let values: Vec<_> = request
+            .metadata()
+            .get_all(request.get_ref().message.as_str())
+            .iter()
+            .map(|value| value.to_str().unwrap_or_default())
+            .collect();
+        Ok(Response::new(EchoResponse {
+            message: values.join(", "),
+        }))
+    }
+
     async fn echo_error_response(
         &self,
         _: tonic::Request<EchoRequest>,
@@ -160,11 +175,13 @@ const DEFAULT_EXPOSED_HEADERS: [HeaderName; 3] = [
     HeaderName::from_static("grpc-message"),
     HeaderName::from_static("grpc-status-details-bin"),
 ];
-const DEFAULT_ALLOW_HEADERS: [HeaderName; 4] = [
+const DEFAULT_ALLOW_HEADERS: [HeaderName; 5] = [
     HeaderName::from_static("x-grpc-web"),
     HeaderName::from_static("content-type"),
     HeaderName::from_static("x-user-agent"),
     HeaderName::from_static("grpc-timeout"),
+    // Sent by the metadata tests
+    HeaderName::from_static("x-tag"),
 ];
 
 #[tokio::main]
