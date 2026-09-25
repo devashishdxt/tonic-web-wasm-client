@@ -14,5 +14,6 @@ tonic-prost = { version = "0.14" }
 tonic-prost-build = { version = "0.14", default-features = false }
 
 [dev-dependencies]
+js-sys = "0.3"
 tonic-web-wasm-client = { path = "../../.." }
 wasm-bindgen-test = "0.3"

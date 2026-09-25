@@ -1,7 +1,7 @@
 use http::header::{InvalidHeaderName, InvalidHeaderValue, ToStrError};
-use js_sys::Object;
+use js_sys::JsString;
 use thiserror::Error;
-use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
 
 /// Error type for `tonic-web-wasm-client`
 #[derive(Debug, Error)]
@@ -57,7 +57,17 @@ impl Error {
     }
 }
 
-fn js_object_display(option: &JsValue) -> String {
-    let object: &Object = option.unchecked_ref();
-    ToString::to_string(&object.to_string())
+#[wasm_bindgen]
+extern "C" {
+    // `String(value)` describes any value, including `null`, `undefined` and objects without a
+    // `toString` method. It is marked `catch` because it throws when `toString` throws.
+    #[wasm_bindgen(js_name = String, catch)]
+    fn js_string(value: &JsValue) -> Result<JsString, JsValue>;
+}
+
+fn js_object_display(value: &JsValue) -> String {
+    match js_string(value) {
+        Ok(string) => string.into(),
+        Err(_) => format!("{value:?}"),
+    }
 }
