@@ -14,7 +14,8 @@ pub enum Encoding {
 impl Encoding {
     pub fn from_content_type(content_type: &str) -> Result<Self, Error> {
         for ct in content_type.split(';') {
-            match ct.trim() {
+            // Media types are case-insensitive.
+            match ct.trim().to_ascii_lowercase().as_str() {
                 GRPC_WEB_TEXT | GRPC_WEB_TEXT_PROTO => return Ok(Encoding::Base64),
                 GRPC_WEB | GRPC_WEB_PROTO => return Ok(Encoding::None),
                 _ => continue,
@@ -38,6 +39,11 @@ mod tests {
             ("application/grpc-web+proto;charset=utf-8", Encoding::None),
             ("application/grpc-web+proto; charset=utf-8", Encoding::None),
             ("charset=utf-8; application/grpc-web+proto", Encoding::None),
+            ("Application/grpc-web+proto", Encoding::None),
+            (
+                "APPLICATION/GRPC-WEB-TEXT+PROTO; charset=utf-8",
+                Encoding::Base64,
+            ),
         ];
         for (content_type, expected) in vals.iter() {
             assert_eq!(
