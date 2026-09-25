@@ -53,5 +53,7 @@ mod error;
 mod fetch;
 pub mod options;
 mod response_body;
+#[cfg(test)]
+mod test_support;
 
 pub use self::{client::Client, error::Error, response_body::ResponseBody};

@@ -141,6 +141,22 @@ impl ResponseBody {
         })
     }
 
+    #[cfg(test)]
+    pub(crate) fn from_body_stream(
+        body_stream: BodyStream,
+        content_type: &str,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            body_stream,
+            buf: EncodedBytes::new(content_type)?,
+            incomplete_data: BytesMut::new(),
+            data: None,
+            trailer: None,
+            state: ReadState::CompressionFlag,
+            finished_stream: false,
+        })
+    }
+
     fn read_stream(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         if self.finished_stream {
             return Poll::Ready(Ok(()));
@@ -240,7 +256,9 @@ impl ResponseBody {
                         let mut trailer_bytes = this.buf.take(trailer_length);
                         trailer_bytes.put_u8(b'\n');
 
-                        let mut trailers_buf = [EMPTY_HEADER; 64];
+                        // One entry per line is always enough, however many trailers there are.
+                        let lines = trailer_bytes.iter().filter(|&&byte| byte == b'\n').count();
+                        let mut trailers_buf = vec![EMPTY_HEADER; lines];
                         let parsed_trailers =
                             match httparse::parse_headers(&trailer_bytes, &mut trailers_buf)
                                 .map_err(|_| Error::HeaderParsingError)?
@@ -255,7 +273,8 @@ impl ResponseBody {
                             let header_name =
                                 HeaderName::from_bytes(parsed_trailer.name.as_bytes())?;
                             let header_value = HeaderValue::from_bytes(parsed_trailer.value)?;
-                            trailers.insert(header_name, header_value);
+                            // A key can repeat; keep every value.
+                            trailers.append(header_name, header_value);
                         }
 
                         *this.trailer = Some(trailers);
@@ -337,6 +356,42 @@ impl Default for ResponseBody {
             state: ReadState::Done,
             finished_stream: true,
         }
+    }
+}
+
+#[cfg(test)]
+mod trailer_tests {
+    use http::HeaderMap;
+
+    use super::TRAILER_BIT;
+    use crate::test_support::{GRPC_WEB, body_from_chunks, drain, frame};
+
+    fn trailers_of(block: &[u8]) -> HeaderMap {
+        let chunks = vec![frame(0x00, b"message"), frame(TRAILER_BIT, block)];
+        let (_, trailers) = drain(body_from_chunks(GRPC_WEB, chunks)).unwrap();
+        trailers.unwrap()
+    }
+
+    #[test]
+    fn repeated_trailer_keeps_every_value() {
+        let trailers = trailers_of(b"x-tag:a\r\nx-tag:b\r\ngrpc-status:0\r\n");
+
+        let values: Vec<_> = trailers.get_all("x-tag").iter().collect();
+        assert_eq!(values, ["a", "b"]);
+    }
+
+    #[test]
+    fn more_than_64_trailers_are_parsed() {
+        let mut block = String::new();
+        for i in 0..100 {
+            block.push_str(&format!("x-meta-{i}:v\r\n"));
+        }
+        block.push_str("grpc-status:0\r\n");
+
+        let trailers = trailers_of(block.as_bytes());
+
+        assert_eq!(trailers.len(), 101);
+        assert_eq!(trailers.get("grpc-status").unwrap(), "0");
     }
 }
 
