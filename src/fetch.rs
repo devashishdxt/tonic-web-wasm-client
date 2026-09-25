@@ -1,4 +1,5 @@
 use js_sys::Promise;
+use tonic::Status;
 use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, Response};
@@ -26,7 +27,15 @@ fn js_fetch(request: &Request, init: &RequestInit) -> Promise {
 pub async fn fetch(request: &Request, init: &RequestInit) -> Result<Response, Error> {
     let js_response = JsFuture::from(js_fetch(request, init))
         .await
-        .map_err(Error::js_error)?;
+        .map_err(|error| match Error::js_error(error) {
+            // fetch rejects when no response arrives: the connection or DNS lookup failed, CORS
+            // blocked the response, ... For gRPC that is `Unavailable`, as with tonic's own
+            // transport. The message is kept, so the cause stays visible.
+            error @ Error::JsError(_) => {
+                Error::TonicStatusError(Status::unavailable(error.to_string()))
+            }
+            error => error,
+        })?;
 
     Ok(js_response.unchecked_into())
 }

@@ -1,5 +1,6 @@
 use std::{
     error::Error,
+    future::Future,
     pin::Pin,
     task::{Context, Poll},
     time::Duration,
@@ -10,6 +11,7 @@ use http::header::HeaderName;
 use proto::echo_server::EchoServer;
 use tonic::{transport::Server, Request, Response, Status};
 use tonic_web::GrpcWebLayer;
+use tower::{Layer, Service};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use self::proto::{echo_server::Echo, EchoRequest, EchoResponse};
@@ -154,6 +156,61 @@ impl Stream for ErrorAfterMessagesStream {
     }
 }
 
+/// Answers requests under `/status/<code>/` with that HTTP status and a plain text body, the way
+/// a proxy or load balancer error page looks, so tests can check how the client handles
+/// responses that do not come from a gRPC server.
+#[derive(Clone)]
+struct HttpStatusLayer;
+
+impl<S> Layer<S> for HttpStatusLayer {
+    type Service = HttpStatusService<S>;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        HttpStatusService { inner }
+    }
+}
+
+#[derive(Clone)]
+struct HttpStatusService<S> {
+    inner: S,
+}
+
+impl<S, B> Service<http::Request<B>> for HttpStatusService<S>
+where
+    S: Service<http::Request<B>, Response = http::Response<tonic::body::Body>>,
+    S::Future: Send + 'static,
+{
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, request: http::Request<B>) -> Self::Future {
+        let status = request
+            .uri()
+            .path()
+            .strip_prefix("/status/")
+            .and_then(|rest| rest.split('/').next())
+            .and_then(|code| code.parse::<http::StatusCode>().ok());
+
+        match status {
+            Some(status) => Box::pin(async move {
+                Ok(http::Response::builder()
+                    .status(status)
+                    .header(http::header::CONTENT_TYPE, "text/plain")
+                    .body(tonic::body::Body::new(
+                        "upstream connect error or disconnect/reset before headers".to_string(),
+                    ))
+                    .unwrap())
+            }),
+            None => Box::pin(self.inner.call(request)),
+        }
+    }
+}
+
 const DEFAULT_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
 const DEFAULT_EXPOSED_HEADERS: [HeaderName; 3] = [
     HeaderName::from_static("grpc-status"),
@@ -182,6 +239,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .expose_headers(DEFAULT_EXPOSED_HEADERS)
                 .allow_headers(DEFAULT_ALLOW_HEADERS),
         )
+        .layer(HttpStatusLayer)
         .layer(GrpcWebLayer::new())
         .add_service(echo)
         .serve(addr)

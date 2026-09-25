@@ -9,7 +9,7 @@ use tonic::body::Body;
 use wasm_bindgen::JsValue;
 use web_sys::{Headers, RequestCredentials, RequestInit};
 
-use crate::{Error, ResponseBody, fetch::fetch, options::FetchOptions};
+use crate::{Error, ResponseBody, content_type::Encoding, fetch::fetch, options::FetchOptions};
 
 pub async fn call(
     mut base_url: String,
@@ -27,6 +27,15 @@ pub async fn call(
 
     let result = Response::builder().status(response.status());
     let (result, content_type) = set_response_headers(result, &response)?;
+
+    let is_grpc_web = content_type
+        .as_deref()
+        .is_some_and(|content_type| Encoding::from_content_type(content_type).is_ok());
+    if !is_grpc_web && response.status() != 200 {
+        // Not a gRPC response, for example a proxy's error page. With an empty body, tonic maps
+        // the HTTP status to a gRPC code (503 to `Unavailable`, 404 to `Unimplemented`, ...).
+        return result.body(ResponseBody::default()).map_err(Into::into);
+    }
 
     let content_type = content_type.ok_or(Error::MissingContentTypeHeader)?;
     let body_stream = response.body().ok_or(Error::MissingResponseBody)?;
