@@ -141,6 +141,22 @@ impl ResponseBody {
         })
     }
 
+    #[cfg(test)]
+    pub(crate) fn from_body_stream(
+        body_stream: BodyStream,
+        content_type: &str,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            body_stream,
+            buf: EncodedBytes::new(content_type)?,
+            incomplete_data: BytesMut::new(),
+            data: None,
+            trailer: None,
+            state: ReadState::CompressionFlag,
+            finished_stream: false,
+        })
+    }
+
     fn read_stream(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         if self.finished_stream {
             return Poll::Ready(Ok(()));
@@ -315,7 +331,16 @@ impl Body for ResponseBody {
                 }
                 return Poll::Ready(None);
             } else if self.finished_stream {
-                // If stream is finished but data is not finished return error
+                // The stream ended between two frames. End the body and let tonic judge the
+                // status: from the response headers in a Trailers-Only response, and from the
+                // missing trailers otherwise.
+                if self.state == ReadState::CompressionFlag
+                    && self.buf.is_empty()
+                    && self.buf.raw_buf.is_empty()
+                {
+                    return Poll::Ready(None);
+                }
+                // The stream ended inside a frame
                 return Poll::Ready(Some(Err(Error::MalformedResponse)));
             }
         }
@@ -343,6 +368,61 @@ impl Default for ResponseBody {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    mod stream_end {
+        use bytes::Bytes;
+
+        use crate::{
+            Error,
+            test_support::{GRPC_WEB, body_from_chunks, drain, frame},
+        };
+
+        const GRPC_WEB_TEXT: &str = "application/grpc-web-text+proto";
+
+        #[test]
+        fn empty_body_ends_without_error() {
+            // A Trailers-Only response: the status is in the headers and the body is empty.
+            let (data, trailers) = drain(body_from_chunks(GRPC_WEB, vec![])).unwrap();
+
+            assert!(data.is_empty());
+            assert!(trailers.is_none());
+        }
+
+        #[test]
+        fn body_ending_between_frames_ends_without_error() {
+            let data_frame = frame(0x00, b"message");
+
+            let (data, trailers) =
+                drain(body_from_chunks(GRPC_WEB, vec![data_frame.clone()])).unwrap();
+
+            assert_eq!(data, data_frame);
+            // tonic reports the missing grpc-status trailer itself.
+            assert!(trailers.is_none());
+        }
+
+        #[test]
+        fn body_ending_inside_a_data_frame_is_malformed() {
+            let data_frame = frame(0x00, b"message");
+
+            for end in 1..data_frame.len() {
+                let result = drain(body_from_chunks(GRPC_WEB, vec![data_frame.slice(..end)]));
+                assert!(
+                    matches!(result, Err(Error::MalformedResponse)),
+                    "truncated at {end}"
+                );
+            }
+        }
+
+        #[test]
+        fn body_ending_inside_a_base64_quartet_is_malformed() {
+            // `AAAAAAA=` is an empty data frame, `AA` the start of the next quartet.
+            let chunks = vec![Bytes::from_static(b"AAAAAAA=AA")];
+
+            let result = drain(body_from_chunks(GRPC_WEB_TEXT, chunks));
+
+            assert!(matches!(result, Err(Error::MalformedResponse)));
+        }
+    }
 
     #[test]
     fn decodes_base64_response() {

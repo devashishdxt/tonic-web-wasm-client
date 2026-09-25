@@ -35,6 +35,14 @@ impl BodyStream {
         }
     }
 
+    #[cfg(test)]
+    pub fn from_stream(body_stream: impl Stream<Item = Result<Bytes, Error>> + 'static) -> Self {
+        Self {
+            body_stream: Box::pin(body_stream),
+            _abort: None,
+        }
+    }
+
     pub fn empty() -> Self {
         let body_stream = empty();
 
